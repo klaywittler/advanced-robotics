@@ -46,11 +46,11 @@ function [F, M, trpy, drpy] = controller(qd, t, qn, params)
 % theta_des = 0;
 psi_des   = qd{qn}.yaw_des;
 
-kp = diag([1;1;1]);
-kd = diag([1;1;1]);
+kp = diag([5;5;5]);
+kd = diag([10;10;10]);
 
-kp_ang = diag([1;1;1]);
-kd_ang = diag([1;1;1]);
+kp_ang = diag([5;5;5]);
+kd_ang = diag([10;10;10]);
 
 
 rdd_des = qd{qn}.acc_des - kd*(qd{qn}.vel - qd{qn}.vel_des) - kp*(qd{qn}.pos - qd{qn}.pos_des);
@@ -63,8 +63,8 @@ theta_des = theta_des(1);
 %
 %
 
-u = zeros(4,1);
-%u = [params.mass*(rdd_des(3) + params.grav);-params.I*(kp_ang*(qd{qn}.euler-[theta_des;phi_des;psi_des]) + kd_ang*(qd{qn}.omega))]; % control input u, you should fill this in
+u    = [params.mass*(rdd_des(3) + params.grav);
+        -params.I*(kp_ang*(qd{qn}.euler-[theta_des;phi_des;psi_des]) + kd_ang*(qd{qn}.omega))]; % control input u, you should fill this in
                   
 % Thrust
 F    = u(1);       % This should be F = u(1) from the project handout
