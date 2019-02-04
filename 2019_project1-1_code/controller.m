@@ -42,29 +42,42 @@ function [F, M, trpy, drpy] = controller(qd, t, qn, params)
 % has a built-in attitude controller). Best to fill them in already
 % during simulation.
 
-% phi_des   = 0;
-% theta_des = 0;
-psi_des   = qd{qn}.yaw_des;
+phi_des = 0;
+theta_des = 0;
+psi_des = qd{qn}.yaw_des;
 
-kp = diag([1;1;1]);
-kd = diag([1;1;1]);
+kp = diag([1; 1; 6.1]);
+kd = diag([1; 1; 3.6]);
 
-kp_ang = diag([1;1;1]);
-kd_ang = diag([1;1;1]);
+kr = diag([20; 1; 1]);
+kw = diag([1; 1; 1]);
 
+R = eulzxy2rotmat(qd{qn}.euler);
 
 rdd_des = qd{qn}.acc_des - kd*(qd{qn}.vel - qd{qn}.vel_des) - kp*(qd{qn}.pos - qd{qn}.pos_des);
-theta_des = (1/params.grav)*[cos(psi_des) sin(psi_des); sin(psi_des) -cos(psi_des)]\[rdd_des(1); rdd_des(2)];
-phi_des = theta_des(2);
-theta_des = theta_des(1);
 
+F_des = params.mass*rdd_des + [0;0;params.mass*params.grav];
+
+a_psi = [cos(psi_des);sin(psi_des);0];
+b3_des = F_des/norm(F_des);
+b2_des = cross(b3_des,a_psi)/norm(cross(b3_des,a_psi));
+b1_des = cross(b2_des,b3_des);
+
+R_des = [b1_des b2_des b3_des];
+
+e_R = veemap(0.5*(R_des'*R - R'*R_des))';
+
+e_w = qd{qn}.omega;
 
 %
 %
 %
 
-u = zeros(4,1);
-%u = [params.mass*(rdd_des(3) + params.grav);-params.I*(kp_ang*(qd{qn}.euler-[theta_des;phi_des;psi_des]) + kd_ang*(qd{qn}.omega))]; % control input u, you should fill this in
+% u = zeros(4,1); % control input u, you should fill this in
+b3 = R(:,3);
+u1 = b3'*F_des;
+u2 = -params.I*(kr*e_R + kw*e_w);
+u = [u1;u2]; 
                   
 % Thrust
 F    = u(1);       % This should be F = u(1) from the project handout

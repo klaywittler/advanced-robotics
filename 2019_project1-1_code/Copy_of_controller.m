@@ -46,25 +46,31 @@ function [F, M, trpy, drpy] = controller(qd, t, qn, params)
 % theta_des = 0;
 psi_des   = qd{qn}.yaw_des;
 
-kp = diag([5;5;5]);
-kd = diag([10;10;10]);
+kp = diag([1; 1; 6.1]);
+kd = diag([1; 1; 3.6]);
 
-kp_ang = diag([5;5;5]);
-kd_ang = diag([10;10;10]);
-
+kp_ang = diag([1; 1; 1]);
+kd_ang = diag([1; 1; 1]);
 
 rdd_des = qd{qn}.acc_des - kd*(qd{qn}.vel - qd{qn}.vel_des) - kp*(qd{qn}.pos - qd{qn}.pos_des);
+
 theta_des = (1/params.grav)*[cos(psi_des) sin(psi_des); sin(psi_des) -cos(psi_des)]\[rdd_des(1); rdd_des(2)];
 phi_des = theta_des(2);
 theta_des = theta_des(1);
 
+%
+%
+%
+p_des = 0;
+q_des = 0;
+euler = [qd{qn}.euler(1);qd{qn}.euler(2);qd{qn}.euler(3)];
+euler_des = [phi_des;theta_des;psi_des];
+omega_des = [p_des;q_des;qd{qn}.yawdot_des];
 
-%
-%
-%
-
-u    = [params.mass*(rdd_des(3) + params.grav);
-        -params.I*(kp_ang*(qd{qn}.euler-[theta_des;phi_des;psi_des]) + kd_ang*(qd{qn}.omega))]; % control input u, you should fill this in
+% u = zeros(4,1); % control input u, you should fill this in
+u1 = params.mass*(rdd_des(3) + params.grav);
+u2 = -params.I*(kp_ang*(euler-euler_des) + kd_ang*(qd{qn}.omega - omega_des));
+u = [u1;u2]; 
                   
 % Thrust
 F    = u(1);       % This should be F = u(1) from the project handout
