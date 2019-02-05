@@ -6,7 +6,7 @@ function [desired_state] = diamond(t, qn)
 % NOTE: the simulator will spawn the robot to be at the
 %       position you return for t == 0
 
-t_final = 14;
+t_final = 13.5;
 
 p1 = [0;0;0];
 p2 = [1/4;sqrt(2);sqrt(2)];
