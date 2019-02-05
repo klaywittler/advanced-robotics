@@ -46,11 +46,11 @@ phi_des = 0;
 theta_des = 0;
 psi_des = qd{qn}.yaw_des;
 
-kp = diag([1; 1; 6.1]);
-kd = diag([1; 1; 3.6]);
+kp = diag([5.3; 5.3; 8.4]);
+kd = diag([5.3; 5.3; 4.8]);
 
-kr = diag([20; 1; 1]);
-kw = diag([1; 1; 1]);
+kr = diag([75; 75; 75]);
+kw = diag([10; 10; 10]);
 
 R = eulzxy2rotmat(qd{qn}.euler);
 
