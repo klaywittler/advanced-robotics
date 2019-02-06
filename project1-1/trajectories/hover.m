@@ -8,7 +8,7 @@ function [desired_state] = hover(t, qn)
 %       position you return for t == 0
 
 if t==0
-    pos = [0; 0; 1];
+    pos = [0; -1; -1];
     vel = [0; 0; 0];
     acc = [0; 0; 0];
     yaw = 0;

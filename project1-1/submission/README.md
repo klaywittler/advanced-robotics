@@ -1,6 +1,6 @@
 # advanced-robotics
 
-Klayton Wittler - klaywittler
+Klayton Wittler - kwittler
 
 Project 1 Phase 1
 
