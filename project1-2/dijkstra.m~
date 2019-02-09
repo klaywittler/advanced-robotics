@@ -52,8 +52,7 @@ while ~ismember(vg,old) && M ~= inf
     front = setdiff(front,u);
     old = [old;u];
     
-    [nIdx, nDist] = knnsearch(Q,Q(u,:),'K',27, 'IncludeTies', true);
-    nIdx = nIdx{1}(nDist{1} <= sqrt(2)).';
+    nIdx = knnsearch(Q,Q(u,:),'K',27)';
     nIdx = setdiff(nIdx,old);
     d = g(u) + ones(size(nIdx));
     lowIdx = d < g(nIdx);
