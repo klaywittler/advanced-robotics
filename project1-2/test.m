@@ -5,7 +5,7 @@ addpath('sample_maps')
 addpath('utils')
 
 astar = true;
-map = load_map('map0.txt',0.5,1,0.01);
+map = load_map('map0.txt',1,1,0.1);
 [path, num_expanded] = dijkstra(map,[0,3,5],[20,3,5],astar);
-%[path, num_expanded] = dijkstra(map,[0;-5;5],[5;20;3]);
+%[path, num_expanded] = dijkstra(map,[0,-5,5],[5,20,3],astar);
 plot_path(map,path);
