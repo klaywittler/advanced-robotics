@@ -67,7 +67,7 @@ while ~ismember(vg,old{1}) && M ~= inf
     [nIdx, cost] = getNeighbors(Q,u,xSize,ySize,zSize,res);
     nIdx = fast_setdiff(nIdx,old{1});
     d = g(u) + cost(nIdx)';%ones(size(nIdx));
-    lowIdx = d < g(nIdx); 
+    lowIdx = d < g(nIdx);
     g(nIdx(lowIdx)) = d(lowIdx);
     p(nIdx(lowIdx)) = u;
     
