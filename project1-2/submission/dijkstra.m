@@ -52,7 +52,7 @@ f = g + h;
 
 [M,u] = min(f);
 front = false(size(f));
-front(u) = true;
+front(u) = 1;
 explored = false(size(f));
 while explored(vg) == 0 && M ~= inf
     front(u) = 0;
@@ -61,12 +61,12 @@ while explored(vg) == 0 && M ~= inf
     [nIdx, d] = getNeighbors(Q,u,xSize,ySize,zSize,res);
     d(explored(nIdx)) = [];
     nIdx(explored(nIdx)) = [];
+    front(nIdx) =  1;
     
     d = g(u) + d;
     lowIdx = d < g(nIdx); 
     g(nIdx(lowIdx)) = d(lowIdx);
     p(nIdx(lowIdx)) = u;
-    front(nIdx) =  1;
     f(nIdx(lowIdx)) = g(nIdx(lowIdx)) + h(nIdx(lowIdx));
     
     uOld = u;
