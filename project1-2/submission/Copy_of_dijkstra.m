@@ -48,46 +48,38 @@ end
 
 if astar
     h = vecnorm(Q-Q(vg,:),2,2);
-%     h = sum((sub2pos(map,Q) - goal).^2,2);
 else
-    h = zeros(size(g));
+    h = 0;
 end
     
 f = g + h;
 
 [M,u] = min(f);
-% M = 0;
-% u = vs;
-front = false(size(f));
-front(u) = true;
-old = false(size(f));
-IDX = 1:numel(f);
-while old(vg) == 0 && M ~= inf
-    front(u) = 0;
-    old(u) = 1;
+front = cell(1);
+front{1} = u;
+old = cell(1);
+b = inf(size(f));
+% hold on;
+while ~ismember(vg,old{1}) && M ~= inf
+    front{1} = fast_setdiff(front{1},u);
+    old{1} = [old{1};u];
 
-    [nIdx, d] = getNeighbors(Q,u,xSize,ySize,zSize,res);
-    d(old(nIdx)) = [];
-    nIdx(old(nIdx)) = [];
-    
-    d = g(u) + d';
+    [nIdx, cost] = getNeighbors(Q,u,xSize,ySize,zSize,res);
+    nIdx = fast_setdiff(nIdx,old{1});
+    d = g(u) + cost(nIdx)';%ones(size(nIdx));
     lowIdx = d < g(nIdx); 
     g(nIdx(lowIdx)) = d(lowIdx);
     p(nIdx(lowIdx)) = u;
-    front(nIdx) =  1;
     
-%     f = g + h;
-    f(nIdx(lowIdx)) = g(nIdx(lowIdx)) + h(nIdx(lowIdx));
+    front{1} = [front{1}; fast_setdiff(nIdx,front{1})];
     
+    f = g + h;
+%     f(nIdx(lowIdx)) = g(nIdx(lowIdx)) + h(nIdx(lowIdx));
+    b(front{1}) = f(front{1});
+    f(f~=b) = inf;
     uOld = u;
-    
-%     [M,u] = min(f(front));
-%     temp = IDX(front);
-%     u = temp(u);
-    
-    temp = find(front);
-    [M,u] = min(f(temp));
-    u = temp(u);
+    [M,u] = min(f);
+    b(front{1}) = inf;
     
     num_expanded = num_expanded + 1;
 end
@@ -148,7 +140,22 @@ function [neighbors, cost] = getNeighbors(positions, index, xSize, ySize, zSize,
 
     neighbors = (index + elementwise(add3, elementwise(add2,add1)));
     cost(neighbors) = elementwise(cadd3, elementwise(cadd2,cadd1));
-    cost(isinf(positions(neighbors,1))) = [];
-    neighbors(isinf(positions(neighbors,1))) = [];
+    neighbors(any(isinf(positions(neighbors(:,1),:)),2)) = [];
 end
 
+function C = fast_setdiff(A,B)
+% MYSETDIFF Set difference of two sets of positive integers (much faster than built-in setdiff)
+% C = my_setdiff(A,B)
+% C = A \ B = { things in A that are not in B }
+% 
+if isempty(A) || isempty(B)
+    C = A;
+    return;
+end
+
+    check = false(1,max(max(A),max(B)));
+    check(A) = true;
+    check(B) = false;
+    C = A(check(A));
+
+end
