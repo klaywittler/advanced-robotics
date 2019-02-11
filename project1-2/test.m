@@ -5,7 +5,7 @@ addpath('sample_maps')
 addpath('utils')
 addpath('submission')
 
-astar = true;
+astar = false;
 % map = load_map('map0.txt',0.5,1,0.1);
 map = load_map('map1.txt',0.1,1,0.1);
 profile on
