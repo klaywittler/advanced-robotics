@@ -83,11 +83,6 @@ while explored(vg) == 0 && M ~= inf
     num_expanded = num_expanded + 1;
 end
 
-if ~explored(vg) 
-    path = zeros(0,3);
-    return
-end
-
 u = uOld;
 pathIdx = cell(1);
 while ~isnan(p(u))
