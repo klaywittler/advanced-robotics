@@ -25,12 +25,7 @@ num_expanded = 0;
 res = map.res_xyz;
 [xSize,ySize,zSize] = size(map.occgrid);
 
-if xSize == 0 || ySize == 0 || zSize == 0
-   path = [start;goal];
-   return
-end
-
-[j,i,k] = ind2sub(size(map.occgrid), find(map.occgrid <= 1)); % , find(map.occgrid == 0)
+[j,i,k] = ind2sub(size(map.occgrid), find(map.occgrid <= 1));
 [jObs,iObs,kObs] = ind2sub(size(map.occgrid), find(map.occgrid == 1));
 Qobs = [jObs, iObs,kObs];
 Q = [j,i,k];
@@ -62,8 +57,7 @@ explored = false(size(f));
 while explored(vg) == 0 && M ~= inf
     front(u) = 0;
     explored(u) = 1;
-    f(u) = inf;
-
+    
     [nIdx, d] = getNeighbors(Q,u,xSize,ySize,zSize,res);
     d(explored(nIdx)) = [];
     nIdx(explored(nIdx)) = [];
@@ -73,10 +67,10 @@ while explored(vg) == 0 && M ~= inf
     g(nIdx(lowIdx)) = d(lowIdx);
     p(nIdx(lowIdx)) = u;
     front(nIdx) =  1;
-
     f(nIdx(lowIdx)) = g(nIdx(lowIdx)) + h(nIdx(lowIdx));
     
     uOld = u;
+    f(u) = inf;
     [M,u] = min(f);
     
     num_expanded = num_expanded + 1;
