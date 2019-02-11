@@ -73,8 +73,7 @@ while explored(vg) == 0 && M ~= inf
     g(nIdx(lowIdx)) = d(lowIdx);
     p(nIdx(lowIdx)) = u;
     front(nIdx) =  1;
-    
-%     f = g + h;
+
     f(nIdx(lowIdx)) = g(nIdx(lowIdx)) + h(nIdx(lowIdx));
     
     uOld = u;
@@ -111,7 +110,10 @@ function array = elementwise(a1,a2)
 end
 
 function [neighbors, cost] = getNeighbors(positions, index, xSize, ySize, zSize, res)
-    if (positions(index,3) == zSize)
+    if (zSize == 1)
+        add1 = 0;
+        cadd1 = 0;
+    elseif (positions(index,3) == zSize)
         add1 = [-xSize*ySize;0];
         cadd1 = [res(3);0].^2;
     elseif (positions(index,3) == 1)
@@ -121,7 +123,10 @@ function [neighbors, cost] = getNeighbors(positions, index, xSize, ySize, zSize,
         add1= [-xSize*ySize;0;xSize*ySize];
         cadd1 = [res(3);0;res(3)].^2;
     end
-    if (positions(index,2) == ySize)
+    if (ySize == 1)
+        add2 = 0;
+        cadd2 = 0;
+    elseif (positions(index,2) == ySize)
         add2 = [-xSize;0];
         cadd2 = [res(2);0].^2;
     elseif (positions(index,2) == 1)
@@ -131,7 +136,10 @@ function [neighbors, cost] = getNeighbors(positions, index, xSize, ySize, zSize,
         add2 = [-xSize;0;xSize];
         cadd2 = [res(2);0;res(2)].^2;
     end
-    if (positions(index,1) == xSize)
+    if (xSize == 1)
+        add3 = 0;
+        cadd3 = 0;
+    elseif (positions(index,1) == xSize)
         add3 = [-1;0];
         cadd3 = [res(1);0].^2;
     elseif (positions(index,1) == 1)
