@@ -48,41 +48,38 @@ end
 
 if astar
     h = vecnorm(Q-Q(vg,:),2,2);
+%     h = sum((sub2pos(map,Q) - goal).^2,2);
 else
-    h = 0;
+    h = zeros(size(g));
 end
     
 f = g + h;
 
 [M,u] = min(f);
-unexplored = zeros(size(f));
-unexplored(u) = 1;
-explored = zeros(size(f));
-b = inf(size(f));
+% M = 0;
+% u = vs;
+front = false(size(f));
+front(u) = true;
+old = false(size(f));
 IDX = 1:numel(f);
-while explored(vg) == 0 && M ~= inf
-    unexplored(u) = 0;
-    explored(u) = 1;
+while old(vg) == 0 && M ~= inf
+    front(u) = 0;
+    old(u) = 1;
 
     [nIdx, cost] = getNeighbors(Q,u,xSize,ySize,zSize,res);
-    nIdx(explored(nIdx) == 1) = [];
-    d = g(u) + cost(nIdx)';
+    nIdx(old(nIdx)) = [];
+    d = g(u) + cost'; %cost(nIdx)';
     lowIdx = d < g(nIdx); 
     g(nIdx(lowIdx)) = d(lowIdx);
     p(nIdx(lowIdx)) = u;
+    front(nIdx) =  1;
     
-    unexplored(nIdx) =  1;
+%     f = g + h;
+    f(nIdx(lowIdx)) = g(nIdx(lowIdx)) + h(nIdx(lowIdx));
     
-    f = g + h;
-%     f(nIdx(lowIdx)) = g(nIdx(lowIdx)) + h(nIdx(lowIdx));
-%     b(unexplored==1) = f(unexplored==1);
-%     f(f~=b) = inf;
-%     uOld = u;
-%     [M,u] = min(f);
-%     b(unexplored==1) = inf;
-
-    [M,u] = min(f(unexplored==1));
-    temp = IDX(unexplored ==1);
+    uOld = u;
+    [M,u] = min(f(front));
+    temp = IDX(front);
     u = temp(u);
     
     num_expanded = num_expanded + 1;
@@ -143,23 +140,9 @@ function [neighbors, cost] = getNeighbors(positions, index, xSize, ySize, zSize,
     end
 
     neighbors = (index + elementwise(add3, elementwise(add2,add1)));
-    cost(neighbors) = elementwise(cadd3, elementwise(cadd2,cadd1));
+    cost = elementwise(cadd3, elementwise(cadd2,cadd1));
     neighbors(any(isinf(positions(neighbors(:,1),:)),2)) = [];
+    cost(any(isinf(positions(neighbors(:,1),:)),2)) = [];
+    cost(cost == 0) = []
 end
 
-function C = fast_setdiff(A,B)
-% MYSETDIFF Set difference of two sets of positive integers (much faster than built-in setdiff)
-% C = my_setdiff(A,B)
-% C = A \ B = { things in A that are not in B }
-% 
-if isempty(A) || isempty(B)
-    C = A;
-    return;
-end
-
-    check = false(1,max(max(A),max(B)));
-    check(A) = true;
-    check(B) = false;
-    C = A(check(A));
-
-end

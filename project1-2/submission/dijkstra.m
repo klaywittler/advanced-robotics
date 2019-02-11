@@ -66,21 +66,27 @@ while old(vg) == 0 && M ~= inf
     front(u) = 0;
     old(u) = 1;
 
-    [nIdx, cost] = getNeighbors(Q,u,xSize,ySize,zSize,res);
+    [nIdx, d] = getNeighbors(Q,u,xSize,ySize,zSize,res);
+    d(old(nIdx)) = [];
     nIdx(old(nIdx)) = [];
-    d = g(u) + cost(nIdx)';
+    
+    d = g(u) + d';
     lowIdx = d < g(nIdx); 
     g(nIdx(lowIdx)) = d(lowIdx);
     p(nIdx(lowIdx)) = u;
-    
     front(nIdx) =  1;
     
 %     f = g + h;
     f(nIdx(lowIdx)) = g(nIdx(lowIdx)) + h(nIdx(lowIdx));
     
     uOld = u;
-    [M,u] = min(f(front));
-    temp = IDX(front);
+    
+%     [M,u] = min(f(front));
+%     temp = IDX(front);
+%     u = temp(u);
+    
+    temp = find(front);
+    [M,u] = min(f(temp));
     u = temp(u);
     
     num_expanded = num_expanded + 1;
@@ -142,6 +148,7 @@ function [neighbors, cost] = getNeighbors(positions, index, xSize, ySize, zSize,
 
     neighbors = (index + elementwise(add3, elementwise(add2,add1)));
     cost(neighbors) = elementwise(cadd3, elementwise(cadd2,cadd1));
-    neighbors(any(isinf(positions(neighbors(:,1),:)),2)) = [];
+    cost(isinf(positions(neighbors,1))) = [];
+    neighbors(isinf(positions(neighbors,1))) = [];
 end
 
