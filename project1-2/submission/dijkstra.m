@@ -56,17 +56,20 @@ while explored(vg) == 0 && fMin ~= inf % check if goal has been explored and if 
     % move point from frontier to explored
     front(u) = 0; 
     explored(u) = 1;
+    
     % find neighboring vertices index
     [nIdx, d] = getNeighbors(Q,u,xSize,ySize,zSize,res);
     d(explored(nIdx)) = []; % clear out explored points
     nIdx(explored(nIdx)) = []; 
     front(nIdx) =  1; % add neighbors to frontier
+    
     % update cost
     d = g(u) + d; % calculate cost of travel
     lowIdx = d < g(nIdx); % find indices that new path is cheaper
     g(nIdx(lowIdx)) = d(lowIdx); % update cost
     parent(nIdx(lowIdx)) = u; % update parent
     f(nIdx(lowIdx)) = g(nIdx(lowIdx)) + h(nIdx(lowIdx)); % recalculate total cost
+    
     % find new point to explore
     uOld = u; % track old index for end of loop
     f(u) = inf; % set explored cost to inf
@@ -91,10 +94,11 @@ end
 
 path = sub2pos(map,Q(pathIdx{1},:)); % convert path indices to coordinates
 path = [start;path;goal]; % append start and goal to fix discretization snap
-
 end
 
-%% helper functions
+%%%%%%%%%%%%%%%%%%%%%%%%
+%%% helper functions %%%
+%%%%%%%%%%%%%%%%%%%%%%%%
 function ind = getIndex(v,Q)   
     % return index of element in matrix
     [~,ind] = ismember(v,Q,'row');
@@ -107,6 +111,13 @@ function array = elementwise(a1,a2)
 end
 
 function [neighbors, cost] = getNeighbors(positions, index, xSize, ySize, zSize, res)
+% getNeighbors returns indices for neighbors to an index and cost(distance)
+% to tavel to point
+% parameters:
+%   positions - nx3 matrix of vertices represented in [i,j,k] indices for the map
+%   index - vertex to find neighbors for
+%   xSize,ySize,zSize - size of map in x,y,z direction
+%   res - 3x1 vector of map resolution in x,y,z directions
     %%% z %%%
     if (zSize == 1) % if empty cannot move in direction
         add1 = 0;
