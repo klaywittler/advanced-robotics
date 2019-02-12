@@ -96,7 +96,6 @@ end
 
 %% helper functions
 function ind = getIndex(v,Q)   
-    % return index of element in matrix
     [~,ind] = ismember(v,Q,'row');
 end
 
