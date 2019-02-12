@@ -17,23 +17,46 @@ function [desired_state] = trajectory_generator(t, qn, varargin)
 % Later it will be called with only t and qn as an argument, at
 % which point you generate the desired state for point t.
 %
-
-desired_state = [];
-
 % use the "persistent" keyword to keep your trajectory around
 % inbetween function calls
 
-t_final = 60;
-p = varargin{2};
+persistent p  
+if ~isempty(varargin)
+    p = varargin{2};
+end
+ 
+p2 = p(2:end,:);
+p1 = p(1:end-1,:);
+d = vecnorm(p2-p1,2,2);
+cumDist = cumsum(d);
+totalDist = sum(d);
 
+maxVel = 1; % m/s
+tFinal = totalDist/maxVel;
 
+ratio = cumDist/totalDist;
+tInterval = [0;ratio*tFinal];
 
+if t <= tInterval(end)
+    dt = t-tInterval; % dt = t - t1;
+    j = find(dt < 0, 1);
+    if isempty(j)
+        j = numel(dt);
+    end
+    newP = j;
+    oldP = j-1;
 
+    tf = tInterval(j)-tInterval(j-1); % tf = t2 - t1; 
+    c = (p(newP,:)-p(oldP,:))/((1/2 - 1/3)*tf^3);
+    pos = -c*((1/3)*dt(oldP)^3 - (tf/2)*dt(oldP)^2) + p(oldP,:);
+    vel = -c*(dt(oldP)^2 - tf*dt(oldP));
+    acc = -c*(2*dt(oldP) - tf);
+else
+    pos = p(end,:);
+    vel = zeros(3,1);
+    acc = zeros(3,1);    
+end
 
-c = (pNew-pOld)/((1/2 - 1/3)*tf^3);
-pos = -c*((1/3)*dt^3 - (tf/2)*dt^2) + pOld;
-vel = -c*(dt^2 - tf*dt);
-acc = -c*(2*dt - tf);
 yaw = 0;
 yawdot = 0;
 
@@ -47,5 +70,3 @@ desired_state.vel = vel(:);
 desired_state.acc = acc(:);
 desired_state.yaw = yaw;
 desired_state.yawdot = yawdot;
-
-end

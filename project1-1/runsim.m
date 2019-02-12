@@ -14,7 +14,7 @@ addpath('submission')
 % You need to implement trajhandle and controlhandle
 
 % trajectory generator
-trajhandle = @circle;
+trajhandle = @diamond;
 
 % controller
 controlhandle = @controller;
