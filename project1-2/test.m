@@ -2,7 +2,7 @@ close all
 clear all
 
 addpath('sample_maps')
-addpath('utils')
+addpath('submission/utils')
 addpath('submission')
 
 astar = false;
