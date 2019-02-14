@@ -34,7 +34,31 @@ function [F, M, trpy, drpy] = controller(qd, t, qn, params)
 %
 
 % =================== Your code goes here ===================
-% ...
+K_p = [9,0,0;...
+       0,9,0;...
+       0,0,9];
+K_d = 2*sqrt(K_p);
+K_r = [10000,0,0;...
+       0,10000,0;...
+       0,0,10000];
+K_w = 2*sqrt(K_r);
+
+accel_des = qd{qn}.acc_des - K_d*(qd{qn}.vel - qd{qn}.vel_des) - K_p*(qd{qn}.pos - qd{qn}.pos_des);
+F_des = params.mass * accel_des + [0;0;params.mass*params.grav];
+R = eulzxy2rotmat(qd{qn}.euler);
+u_1 = (R*[0;0;1]).'*F_des;
+u_2 = [0;0;0];
+
+if any(F_des)
+    b3_des = F_des/norm(F_des);
+    b2_des = cross(b3_des, [cos(qd{qn}.yaw_des); sin(qd{qn}.yaw_des); 0]);
+    b2_des = b2_des/norm(b2_des);
+    R_des = [cross(b2_des, b3_des), b2_des, b3_des];
+
+    e_r = 0.5*veemap(R_des.'*R-R.'*R_des);
+    u_2 = params.I*(-K_r*e_r.' - K_w*(qd{qn}.omega));
+    ptpsi = rotmat2eulzxy(R_des);
+end
 % ==============================
 
 % Desired roll, pitch and yaw (in rad). In the simulator, those will be *ignored*.
@@ -42,50 +66,18 @@ function [F, M, trpy, drpy] = controller(qd, t, qn, params)
 % has a built-in attitude controller). Best to fill them in already
 % during simulation.
 
-psi_des = qd{qn}.yaw_des;
-
-kp = diag([9; 9; 9]); % [ 9 ; 9 ; 9]
-kd = diag([6.1; 6.1; 6.1]); % [5 ; 5; 6];
-
-kr = diag([125; 125; 125]); % [4200; 4200; 4200]
-kw = diag([22; 22; 22]); % [130; 130; 130]
-
-R = eulzxy2rotmat(qd{qn}.euler);
-
-rdd_des = qd{qn}.acc_des - kd*(qd{qn}.vel - qd{qn}.vel_des) - kp*(qd{qn}.pos - qd{qn}.pos_des);
-
-F_des = params.mass*rdd_des + [0;0;params.mass*params.grav];
-
-a_psi = [cos(psi_des);sin(psi_des);0];
-b3_des = F_des/norm(F_des);
-b2_des = cross(b3_des,a_psi)/norm(cross(b3_des,a_psi));
-b1_des = cross(b2_des,b3_des);
-
-R_des = [b1_des b2_des b3_des];
-eul = rotmat2eulzxy(R_des);
-phi_des = eul(1);
-theta_des = eul(2);
-psi_des = eul(3);
-
-e_R = veemap(0.5*(R_des'*R - R'*R_des))';
-
-e_w = qd{qn}.omega;
+phi_des   = ptpsi(1);
+theta_des = ptpsi(2);
+psi_des   = ptpsi(3);
 
 %
 %
-%
-
-% u = zeros(4,1); % control input u, you should fill this in
-b3 = R(:,3);
-u1 = b3'*F_des;
-u2 = -params.I*(kr*e_R + kw*e_w);
-u = [u1;u2]; 
-                  
+%  
 % Thrust
-F    = u(1);       % This should be F = u(1) from the project handout
+F    = u_1;       % This should be F = u(1) from the project handout
 
 % Moment
-M    = u(2:4);     % note: params.I has the moment of inertia
+M    = u_2;     % note: params.I has the moment of inertia
 
 % =================== Your code ends here ===================
 
