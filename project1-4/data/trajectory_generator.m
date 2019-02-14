@@ -22,7 +22,6 @@ function [desired_state] = trajectory_generator(t, qn, varargin)
 
 persistent p
 
-
 if ~isempty(varargin)
     p = varargin{2};
     pos = [0, 0, 0];
@@ -37,7 +36,7 @@ else
     
     d = sqrt(sum((p2-p1).^2, 2));
     
-    % d = vnorm(p2-p1,2,2);
+    % d = vecnorm(p2-p1,2,2);
     cumDist = cumsum(d);
     totalDist = sum(d);
     
