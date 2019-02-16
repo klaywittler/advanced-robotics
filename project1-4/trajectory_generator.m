@@ -23,9 +23,7 @@ function [desired_state] = trajectory_generator(t, qn, varargin)
 persistent p  
 if ~isempty(varargin)
     p = varargin{2};
-    pos = zeros(3,1);
-    vel = zeros(3,1);
-    acc = zeros(3,1);   
+     
 else
     p2 = p(2:end,:);
     p1 = p(1:end-1,:);
