@@ -20,7 +20,10 @@ end
 
 %% Generate trajectory
 disp('Generating Trajectory ...');
+profile on
 trajectory_generator([], [], map, path{1});
+profile report
+profile off
 
 %% Run trajectory
 disp('Running Trajectory ...');

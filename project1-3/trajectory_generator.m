@@ -94,30 +94,32 @@ function [v] = minsnap(n,d,w,dt)
 %   @output beq - b vector from linear equality constraint A_eq v = b_eq
 %   @output H - matrix such that the integral of snap squared is .5 v^T H v
 
+np = numel(w(:,1));
 dim = numel(w(1,:));
-Aeq = zeros(0,dim*d*n);
-beq = zeros(0,1);
+ddt = 4;
+Aeq = zeros(ddt*dim*np + dim*2*(np-2),dim*d*n);
+beq = zeros(ddt*dim*np + dim*2*(np-2),1);
 H = zeros(dim*d*n,dim*d*n);
 
 % calculate correct values for Aeq, beq, and H
 
 for i=1:n
     [Aeq_i, beq_i] = Ab_i1(i, n, d, dt(i), w(i,:)', w(i+1,:)');
-    Aeq = [Aeq; Aeq_i];
-    beq = [beq; beq_i];
+    Aeq(2*dim*(i-1)+1:2*dim*i,:) = Aeq_i; 
+    beq(2*dim*(i-1)+1:2*dim*i,:) = beq_i;
 
 end
-
+j = 2*dim*i + 1;
 for i=1:(n-1)
    for k=1:4
-       [Aeq_i, beq_i] = Ab_i2(i, k, n, d, dt(i));
-       Aeq = [Aeq; Aeq_i];
-       beq = [beq; beq_i];
+       [Aeq_i, beq_i] = Ab_i2(i, k, n, d, dt(i)); % speed up here 4
+       Aeq(dim*(i-1)+j:dim*i+j-1,:) = Aeq_i; 
+       beq(dim*(i-1)+j:dim*i+j-1,:) = beq_i;
    end
 end
 
 for i=1:n
-    H = H + 2*H_i1(i, n, d, dt(i));
+    H = H + 2*H_i1(i, n, d, dt(i)); % speed up here 2
 end
 
 % solves the quadratic program for v
