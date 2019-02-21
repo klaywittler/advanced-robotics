@@ -22,8 +22,8 @@ function [ desired_state ] = trajectory_generator(t, qn, map, path)
 % path0 = path;
 
 persistent p m tI c
-deg = 14; % degree of polynomial
-maxVel = 1; % m/s
+deg = 7; % degree of polynomial
+maxVel = 0.5; % m/s
 if nargin > 2
     desired_state = [];
     p = path;
@@ -39,7 +39,7 @@ if nargin > 2
     dt = tI(2:end) - tI(1:end-1);
     dim =  numel(p(1,:));
     n = numel(p(:,1))-1;
-    v = minsnap(n,deg,p,dt);
+    v = minsnap(n,deg,p,dt,m);
     c = zeros(3,deg,n);
     for i=1:n
         for j=0:deg-1
@@ -81,7 +81,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%
 %%% helper functions %%%
 %%%%%%%%%%%%%%%%%%%%%%%%
-function [v] = minsnap(n,d,w,dt)
+function [v] = minsnap(n,d,w,dt,map)
 %MINSNAP(n,d,w,r,dt) calculates the polynomial coefficients for the minimum
 %snap trajectory intersecting waypoints w.
 %   @param n - total number of polynomials.
@@ -94,20 +94,29 @@ function [v] = minsnap(n,d,w,dt)
 %   @output beq - b vector from linear equality constraint A_eq v = b_eq
 %   @output H - matrix such that the integral of snap squared is .5 v^T H v
 
+% [c,b] = getBoxes(map.blocks);
+% 
+% numObs = numel(c(:,1));
 np = numel(w(:,1));
 dim = numel(w(1,:));
 ddt = 4;
 Aeq = zeros(ddt*dim*np + dim*2*(np-2),dim*d*n);
 beq = zeros(ddt*dim*np + dim*2*(np-2),1);
+% Aineq = zeros(numObs*dim*2*(np-2),dim*d*n);
+% bineq = zeros(numObs*dim*2*(np-2),1);
 H = zeros(dim*d*n,dim*d*n);
 
 % calculate correct values for Aeq, beq, and H
+% c = reshape(c',[numel(c),1]);
+% b = reshape(b',[numel(b),1]);
 
 for i=1:n
     [Aeq_i, beq_i] = Ab_i1(i, n, d, dt(i), w(i,:)', w(i+1,:)');
     Aeq(2*dim*(i-1)+1:2*dim*i,:) = Aeq_i; 
     beq(2*dim*(i-1)+1:2*dim*i,:) = beq_i;
-
+%     Aineq_i = repmat(Aeq_i,[numObs/2,1]);
+%     Aineq(numObs*2*dim*(i-1)+1:numObs*2*dim*i,:) = [Aineq_i;-Aineq_i];
+%     bineq(numObs*2*dim*(i-1)+1:numObs*2*dim*i,:) = [b+c;b-c];
 end
 j = 2*dim*i + 1;
 for i=1:(n-1)
@@ -122,8 +131,24 @@ for i=1:n
     H = H + 2*H_i1(i, n, d, dt(i)); % speed up here 2
 end
 
+% options = optimoptions('fmincon','SpecifyObjectiveGradient',false,'SpecifyConstraintGradient',false);%,'Display','iter');
+% problem.objective = @(v) 0.5*v'*H*v;
+% problem.options = options;
+% problem.solver = 'fmincon';
+% problem.Aeq = Aeq;
+% problem.beq = beq;
+% problem.lb = [];
+% problem.ub = [];
+% problem.NONLCON = @nonlinConstraints 
+% v = fmincon(problem);
+
 % solves the quadratic program for v
 v = quadprog(H,zeros(dim*d*n,1),zeros(0,dim*d*n),zeros(0,1),Aeq,beq);
+% v = quadprog(H,zeros(dim*d*n,1),Aineq,bineq,Aeq,beq);
+end
+
+function [C] = nonlinConstraints(A,b,c)
+    
 end
 
 function [A_i1, b_i1] = Ab_i1(i, n, d, dt_i, w_i, w_ip1)
@@ -212,4 +237,9 @@ for k=4:(d-1)
     end
 end
 
+end
+
+function [c,b] = getBoxes(box)
+    c = (box(:,1:3)+box(:,4:6))/2;
+    b = c-box(:,1:3);
 end

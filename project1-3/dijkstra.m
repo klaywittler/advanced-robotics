@@ -38,8 +38,9 @@ vs = getIndex(pos2sub(map,start),Q); % index of starting position
 vg = getIndex(pos2sub(map,goal),Q); % index of goal position
 
 if astar
-    h = vecnorm(Q-Q(vg,:),2,2); % euclidean heuristic
-%     h = sum((sub2pos(map,Q) - goal).^2,2);
+%     h = vecnorm(Q-Q(vg,:),1,2); % euclidean heuristic
+    h = sum((sub2pos(map,Q) - goal).^2,2); % l2
+%     h = sum(abs(sub2pos(map,Q) - goal),2); % l1
 else
     h = zeros(size(g)); % heuristic of zero for dijkstra
 end
