@@ -23,7 +23,7 @@ function [ desired_state ] = trajectory_generator(t, qn, map, path)
 
 persistent p m tI c
 deg = 7; % degree of polynomial
-maxVel = 0.5; % m/s
+maxVel = 1.0; % m/s
 if nargin > 2
     desired_state = [];
     p = path;
@@ -100,8 +100,10 @@ function [v] = minsnap(n,d,w,dt,map)
 np = numel(w(:,1));
 dim = numel(w(1,:));
 ddt = 4;
-Aeq = zeros(ddt*dim*np + dim*2*(np-2),dim*d*n);
-beq = zeros(ddt*dim*np + dim*2*(np-2),1);
+Aeq = [];
+beq = [];
+% Aeq = zeros(ddt*dim*np + dim*2*(np-2),dim*d*n);
+% beq = zeros(ddt*dim*np + dim*2*(np-2),1);
 % Aineq = zeros(numObs*dim*2*(np-2),dim*d*n);
 % bineq = zeros(numObs*dim*2*(np-2),1);
 H = zeros(dim*d*n,dim*d*n);
@@ -112,6 +114,8 @@ H = zeros(dim*d*n,dim*d*n);
 
 for i=1:n
     [Aeq_i, beq_i] = Ab_i1(i, n, d, dt(i), w(i,:)', w(i+1,:)');
+%     Aeq = [Aeq; Aeq_i];
+%     beq = [beq; beq_i];
     Aeq(2*dim*(i-1)+1:2*dim*i,:) = Aeq_i; 
     beq(2*dim*(i-1)+1:2*dim*i,:) = beq_i;
 %     Aineq_i = repmat(Aeq_i,[numObs/2,1]);
@@ -120,10 +124,12 @@ for i=1:n
 end
 j = 2*dim*i + 1;
 for i=1:(n-1)
-   for k=1:4
+   for k=1:ddt
        [Aeq_i, beq_i] = Ab_i2(i, k, n, d, dt(i)); % speed up here 4
-       Aeq(dim*(i-1)+j:dim*i+j-1,:) = Aeq_i; 
-       beq(dim*(i-1)+j:dim*i+j-1,:) = beq_i;
+%        Aeq = [Aeq; Aeq_i];
+%        beq = [beq; beq_i];
+       Aeq(dim*(i-1)+(k-1)+j:dim*i+(k-1)+j-1,:) = Aeq_i; 
+       beq(dim*(i-1)+(k-1)+j:dim*i+(k-1)+j-1,:) = beq_i;
    end
 end
 
@@ -147,9 +153,9 @@ v = quadprog(H,zeros(dim*d*n,1),zeros(0,dim*d*n),zeros(0,1),Aeq,beq);
 % v = quadprog(H,zeros(dim*d*n,1),Aineq,bineq,Aeq,beq);
 end
 
-function [C] = nonlinConstraints(A,b,c)
-    
-end
+% function [C] = nonlinConstraints(A,b,c)
+%     
+% end
 
 function [A_i1, b_i1] = Ab_i1(i, n, d, dt_i, w_i, w_ip1)
 %AB_I1(i, n, d, dt_i, w_i, w_ip1) computes the linear equality constraint
