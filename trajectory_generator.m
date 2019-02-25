@@ -21,32 +21,31 @@ function [ desired_state ] = trajectory_generator(t, qn, map, path)
 % map0 = map;
 % path0 = path;
 
-persistent p tI c
+persistent p m tI c
 deg = 8; % degree of polynomial
-avgAccel = 0.18; % m/s
+maxVel = 1.5; % m/s
 if nargin > 2
     desired_state = [];
     p = path;
+    m = map;
     p2 = p(2:end,:);
     p1 = p(1:end-1,:);
     d = sqrt(sum((p2-p1).^2, 2));
     cumDist = cumsum(d);
     totalDist = sum(d);
-    tFinal = sqrt(2*totalDist/avgAccel);
+    tFinal = totalDist/maxVel;
     ratio = cumDist/totalDist;
     tI = [0;ratio*tFinal];
     dt = tI(2:end) - tI(1:end-1);
     dim =  numel(p(1,:));
     n = numel(p(:,1))-1;
     v = minsnap(n,deg,p,dt,dim);
-    c = reshape(v,[3,deg,n]);
-%     c = zeros(3,deg,n);
-%     for i=1:n
-%         for j=0:deg-1
-%             c(:,j+1,i) = v(1 + (i-1)*dim*deg + dim*j:3 + (i-1)*dim*deg + dim*j); 
-%         end
-%     end
-    ploting(c,tI,tFinal,deg);
+    c = zeros(3,deg,n);
+    for i=1:n
+        for j=0:deg-1
+            c(:,j+1,i) = v(1 + (i-1)*dim*deg + dim*j:3 + (i-1)*dim*deg + dim*j); 
+        end
+    end
 else
     if t <= tI(end)
        dtI = t-tI; % dt = t - t1;
@@ -95,22 +94,33 @@ function [v] = minsnap(n,d,w,dt,dim)
 %   @output beq - b vector from linear equality constraint A_eq v = b_eq
 %   @output H - matrix such that the integral of snap squared is .5 v^T H v
 
+% [c,b] = getBoxes(map.blocks);
+% 
+% numObs = numel(c(:,1));
+% c = reshape(c',[numel(c),1]);
+% b = reshape(b',[numel(b),1]);
+%     Aineq_i = repmat(Aeq_i,[numObs/2,1]);
+%     Aineq(numObs*2*dim*(i-1)+1:numObs*2*dim*i,:) = [Aineq_i;-Aineq_i];
+%     bineq(numObs*2*dim*(i-1)+1:numObs*2*dim*i,:) = [b+c;b-c];
+
 ddt = d-1;
-Aeq = zeros(ddt*dim*(n-1) + dim*2*(n),dim*d*n);
-beq = zeros(ddt*dim*(n-1) + dim*2*(n),1);
+Aeq = zeros(ddt*dim*n + dim*2*(n+2),dim*d*n);
+beq = zeros(ddt*dim*n + dim*2*(n+2),1);
+% Aineq = zeros(numObs*dim*2*(np-2),dim*d*n);
+% bineq = zeros(numObs*dim*2*(np-2),1);
 % H = zeros(dim*d*n,dim*d*n);
 
 % calculate correct values for Aeq, beq, and H
 j = 2*dim*n + 1;
 for i=1:n
-    [Aeq_i, beq_i] = Ab_iPosition(i, n, d, dt(i), w(i,:)', w(i+1,:)', dim);
+    [Aeq_i, beq_i] = Ab_i1(i, n, d, dt(i), w(i,:)', w(i+1,:)');
     Aeq(2*dim*(i-1)+1:2*dim*i,:) = Aeq_i; 
     beq(2*dim*(i-1)+1:2*dim*i,:) = beq_i;
-%     H = H + 2*H_i(i, n, d, dt(i), dim);
+%     H = H + 2*H_i1(i, n, d, dt(i));
     if  i<n
         % matching derivatives between polynomials
         for k=1:ddt
-            [Aeq_i, beq_i] = Ab_iDerivative(i, k, n, d, dt(i),dim);
+            [Aeq_i, beq_i] = Ab_i2(i, k, n, d, dt(i));
             Aeq(dim*(k-1)+ j:dim*k + j-1,:) = Aeq_i; 
             beq(dim*(k-1)+ j:dim*k + j-1,:) = beq_i;
         end
@@ -118,81 +128,27 @@ for i=1:n
     else
         % constraint for 0 derivatives at beginning
         for k=1:ddt
-            [Aeq_i, beq_i] = Ab_iDerivative(1, k, n, d, 0,dim);
+            [Aeq_i, beq_i] = Ab_i2(1, k, n, d, 0);
             Aeq(dim*(k-1)+ j:dim*k + j-1,:) = Aeq_i; 
             beq(dim*(k-1)+ j:dim*k + j-1,:) = beq_i;
         end 
         j = j + dim*ddt;
         % constraint for 0 derivatives at end
         for k=1:ddt
-            [Aeq_i, beq_i] = Ab_iDerivative(n, k, n, d, 0, dim);
+            [Aeq_i, beq_i] = Ab_i2(n, k, n, d, 0);
             Aeq(dim*(k-1)+ j:dim*k + j-1,:) = Aeq_i; 
             beq(dim*(k-1)+ j:dim*k + j-1,:) = beq_i;
         end 
         j = j + dim*ddt;
     end
 end
+
 % solves the quadratic program for v
 % v = quadprog(H,zeros(dim*d*n,1),zeros(0,dim*d*n),zeros(0,1),Aeq,beq);
 v = Aeq\beq;
 end
 
-function [v] = minsnap2(n,d,w,dt,dim)
-%MINSNAP(n,d,w,r,dt) calculates the polynomial coefficients for the minimum
-%snap trajectory intersecting waypoints w.
-%   @param n - total number of polynomials.
-%   @param d - number of terms in each polynomial.
-%   @param w - cell array of waypoints, containing w_i in w{i}.
-%   @param dt - cell array of delays, containing \Delta t_i in dt{i}.
-%
-%   @output v - vector of polynomial coefficients, output of quadprog.
-%   @output Aeq - A matrix from linear equality constraint A_eq v = b_eq
-%   @output beq - b vector from linear equality constraint A_eq v = b_eq
-%   @output H - matrix such that the integral of snap squared is .5 v^T H v
-
-ddt = d-1;
-Aeq = zeros(ddt*dim*(n) + dim*2*(n) + (floor(ddt/2)-2)*dim,dim*d*n);
-beq = zeros(ddt*dim*(n) + dim*2*(n) + (floor(ddt/2)-2)*dim,1);
-H = zeros(dim*d*n,dim*d*n);
-
-% calculate correct values for Aeq, beq, and H
-j = 2*dim*n + 1;
-for i=1:n
-    [Aeq_i, beq_i] = Ab_iPosition(i, n, d, dt(i), w(i,:)', w(i+1,:)', dim);
-    Aeq(2*dim*(i-1)+1:2*dim*i,:) = Aeq_i; 
-    beq(2*dim*(i-1)+1:2*dim*i,:) = beq_i;
-    H = H + 2*H_i(i, n, d, dt(i), dim);
-    if  i<n
-        % matching derivatives between polynomials
-        for k=1:ddt
-            [Aeq_i, beq_i] = Ab_iDerivative(i, k, n, d, dt(i),dim);
-            Aeq(dim*(k-1)+ j:dim*k + j-1,:) = Aeq_i; 
-            beq(dim*(k-1)+ j:dim*k + j-1,:) = beq_i;
-        end
-        j = j + dim*ddt;
-    else
-        % constraint for 0 derivatives at beginning
-        for k=1:ceil(ddt/2)
-            [Aeq_i, beq_i] = Ab_iDerivative(1, k, n, d, 0,dim);
-            Aeq(dim*(k-1)+ j:dim*k + j-1,:) = Aeq_i; 
-            beq(dim*(k-1)+ j:dim*k + j-1,:) = beq_i;
-        end 
-        j = j + dim*ceil(ddt/2);
-        % constraint for 0 derivatives at end
-        for k=1:ceil(ddt/2)
-            [Aeq_i, beq_i] = Ab_iDerivative(n, k, n, d, 0, dim);
-            Aeq(dim*(k-1)+ j:dim*k + j-1,:) = Aeq_i; 
-            beq(dim*(k-1)+ j:dim*k + j-1,:) = beq_i;
-        end 
-        j = j + dim*ceil(ddt/2);
-    end
-end
-% solves the quadratic program for v
-v = quadprog(H,zeros(dim*d*n,1),zeros(0,dim*d*n),zeros(0,1),Aeq,beq);
-% v = Aeq\beq;
-end
-
-function [A_i1, b_i1] = Ab_iPosition(i, n, d, dt_i, w_i, w_ip1, dim)
+function [A_i1, b_i1] = Ab_i1(i, n, d, dt_i, w_i, w_ip1)
 %AB_I1(i, n, d, dt_i, w_i, w_ip1) computes the linear equality constraint
 % constants to require the ith polynomial to meet waypoints w_i and w_{i+1}
 % at it's endpoints.
@@ -206,6 +162,7 @@ function [A_i1, b_i1] = Ab_iPosition(i, n, d, dt_i, w_i, w_ip1, dim)
 %   @output A_i1 - A matrix from linear equality constraint A_i1 v = b_i1
 %   @output b_i1 - b vector from linear equality constraint A_i1 v = b_i1
 
+dim = numel(w_i);
 A_i1 = zeros(2*dim,dim*d*n);
 % b_i1 = zeros(2*dim,1);
 % coefficient for x_{i,0}
@@ -227,7 +184,7 @@ b_i1 = [w_i; w_ip1];
 
 end
 
-function [A_i2, b_i2] = Ab_iDerivative(i, k, n, d, dt_i, dim)
+function [A_i2, b_i2] = Ab_i2(i, k, n, d, dt_i)
 %AB_1(i, n, d, dt_i, w_i, w_ip1) computes the linear equality constraint
 % constants to require the kth derivatives of the ith and (i+1)th
 % polynomials to equal where they meet.
@@ -240,6 +197,7 @@ function [A_i2, b_i2] = Ab_iDerivative(i, k, n, d, dt_i, dim)
 %   @output A_i2 - A matrix from linear equality constraint A_i2 v = b_i2
 %   @output b_i2 - b vector from linear equality constraint A_i2 v = b_i2
 
+dim = 3;
 A_i2 = zeros(dim,dim*d*n);
 b_i2 = zeros(dim,1);
 for j=k:(d-1)
@@ -254,7 +212,7 @@ if dt_i ~= 0
 end
 end
 
-function [H_i] = H_i(i, n, d, dt_i, dim)
+function [H_i] = H_i1(i, n, d, dt_i)
 %H_i1(i, n, d, dt_i, w_i, w_ip1) computes the integral of snap squared over
 % the ith polynomial.
 %   @param i - index of the polynomial.
@@ -265,6 +223,7 @@ function [H_i] = H_i(i, n, d, dt_i, dim)
 %   @output H_i - matrix such that the snap squared integral is equal to
 %   v^T H_i v
 
+dim = 3;
 H_i = zeros(dim*d*n,dim*d*n);
 
 for k=4:(d-1)
@@ -276,51 +235,4 @@ for k=4:(d-1)
     end
 end
 
-end
-
-function ploting(c,tI, tF, deg)  
-    pow0 = 0:deg-1; 
-    pow1 = pow0 - 1;
-    pow2 = pow1 - 1;
-    pow3 = pow2 -1;
-    pow4 = pow3 - 1;
-    pow5 = pow4 - 1;
-    pow6 = pow5 - 1;
-    pow7 = pow6 - 1;
-    pow1(pow1 < 0) = [];
-    pow2(pow2 < 0) = [];
-    pow3(pow3 < 0) = [];
-    pow4(pow4 < 0) = [];
-    pow5(pow5 < 0) = [];
-    pow6(pow6 < 0) = [];
-    pow7(pow7 < 0) = [];
-    
-    t = linspace(0, tF, 100);
-    pos = zeros(3,numel(t)-1);
-    vel = zeros(3,numel(t)-1);
-    acc = zeros(3,numel(t)-1);
-    jerk = zeros(3,numel(t)-1);
-    snap = zeros(3,numel(t)-1);
-    crackle = zeros(3,numel(t)-1);
-    pop = zeros(3,numel(t)-1);
-    sev = zeros(3,numel(t)-1);
-
-    
-    for i=1:numel(t)-1
-        dtI = t(i)-tI; % dt = t - t1;
-        j = find(dtI < 0, 1) - 1;
-        if isempty(j)
-           j = numel(dtI);
-         end
-         dt = t(i) - tI(j);
-        pos(:,i) = c(:,:,j)*(dt.^pow0)';
-        vel(:,i) = c(:,:,j)*([0 ,pow0(2:end).*(dt.^(pow1))])';
-        acc(:,i) = c(:,:,j)*([0, 0, pow0(3:end).*pow1(2:end).*(dt.^(pow2))])';
-        jerk(:,i) = c(:,:,j)*([0, 0, 0, pow0(4:end).*pow1(3:end).*pow2(2:end).*(dt.^(pow3))])';
-        snap(:,i) = c(:,:,j)*([0, 0, 0, 0, pow0(5:end).*pow1(4:end).*pow2(3:end).*pow3(2:end).*(dt.^(pow4))])';
-        crackle(:,i) = c(:,:,j)*([0, 0, 0, 0, 0, pow0(6:end).*pow1(5:end).*pow2(4:end).*pow3(3:end).*pow4(2:end).*(dt.^(pow5))])';
-        pop(:,i) = c(:,:,j)*([0, 0, 0, 0, 0, 0, pow0(7:end).*pow1(6:end).*pow2(5:end).*pow3(4:end).*pow4(3:end).*pow5(2:end).*(dt.^(pow6))])';
-        sev(:,i) = c(:,:,j)*([0, 0, 0, 0, 0, 0, 0, pow0(8:end).*pow1(7:end).*pow2(6:end).*pow3(5:end).*pow4(4:end).*pow5(3:end).*pow6(2:end).*(dt.^(pow7))])';
-    end
-    t = t(1:end-1);
 end

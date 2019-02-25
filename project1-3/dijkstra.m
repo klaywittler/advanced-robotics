@@ -93,13 +93,15 @@ while ~isnan(parent(u))
     u = parent(u);
 end
 
+
 path = sub2pos(map,Q(pathIdx{1},:)); % convert path indices to coordinates
-path = [start;path;goal]; % append start and goal to fix discretization snap
+pruned = pruneMap(path, map);
+path = [start;pruned;goal]; % append start and goal to fix discretization snap
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%
-%%% helper function %%%
-%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%
+%%% helper function  %%%
+%%%%%%%%%%%%%%%%%%%%%%%%
 function ind = getIndex(v,Q)   
 % getIndex returns index of element in matrix
 % parameters:
@@ -108,6 +110,9 @@ function ind = getIndex(v,Q)
     [~,ind] = ismember(v,Q,'row');
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%
+%%% helper functions %%%
+%%%%%%%%%%%%%%%%%%%%%%%%
 function [neighbors, cost] = getNeighbors(positions, index, xSize, ySize, zSize, res)
 % getNeighbors returns indices for neighbors to an index and cost(distance)
 % to tavel to point
@@ -169,9 +174,6 @@ cost = sqrt(cost);
 neighbors(isinf(positions(neighbors,1))) = []; % get rid of obstacle entries
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%
-%%% helper function %%%
-%%%%%%%%%%%%%%%%%%%%%%%
 function array = elementwise(a1,a2)
 % elementwise convoles the two arrays
 % parameters:
@@ -179,4 +181,92 @@ function array = elementwise(a1,a2)
 %   a2 - 1xn vector
     array = a1.' + a2;
     array = array(:);
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+%%% helper functions %%%
+%%%%%%%%%%%%%%%%%%%%%%%%
+function pruned = pruneMap(path, map)
+%     pruned_f = pruneForward(path, map, center, boundary);
+    pruned_temp = pruneBackward(path, map);
+%     dist_f = sum(sqrt(sum(diff(pruned_f, 1).^2,2)));
+%     dist_b = sum(sqrt(sum(diff(pruned_b, 1).^2,2)));
+%     if dist_f >= dist_b
+%         pruned_temp = pruned_b;
+%     else
+%         pruned_temp = pruned_f;
+%     end 
+    pruned = pruned_temp(1,:);
+    for i=1:numel(pruned_temp(:,1))-1
+        current = pruned_temp(i,:);
+        next = pruned_temp(i+1,:);
+        pruned = [pruned;generatePoints(current, next, 13*map.res_xyz)];
+    end
+    pruned = [pruned;pruned_temp(end,:)];
+end
+
+%Forwards
+function pruned = pruneForward(path, map)
+    [center,boundary] = getBoxes(map.blocks);
+    path_index = 1;
+    current = path(path_index, :);
+    pruned = [current];
+    while ~all(current == path(end, :))
+        next_index = path_index+1;
+        next = path(next_index, :);
+        while (next_index + 1 <= numel(path(:,1))) && ~checkCollision(map, generatePoints(current, next, map.res_xyz), center, boundary)
+            next_index = next_index + 1;
+            next = path(next_index, :);
+        end
+        path_index = next_index ;
+        current = path(path_index, :);
+        pruned = [pruned; current];
+    end
+end
+
+%Backwards
+function pruned = pruneBackward(path, map)
+    [center,boundary] = getBoxes(map.blocks);
+    path_index = 1;
+    current = path(path_index, :);
+    pruned = [current];
+    while ~all(current == path(end, :))
+        next_index = numel(path(:,1));
+        next = path(next_index, :);
+        while (next_index - 1 ~= path_index) && checkCollision(map, generatePoints(current, next, map.res_xyz), center, boundary)
+            next_index = next_index - 1;
+            next = path(next_index, :);
+        end
+        path_index = next_index;
+        current = path(path_index, :);
+        pruned = [pruned; current];
+    end
+end
+
+function collides = checkCollision(map, points, c, b)
+    collides = false;
+%     [c,b] = getBoxes(map.blocks);
+%     p = reshape(points,[1,3,numel(points(:,1))]);
+%     if any(all(p <= c + b + map.margin,2) & all(p >= c - b - map.margin,2),'all')
+%        collides = true;
+%     end
+    for ii = 1:numel(points(:, 1))
+        if any(all(points(ii,:) <= c + b + map.margin,2) & all(points(ii,:) >= c - b - map.margin,2))
+           collides = true;
+           return
+        end
+    end
+end
+
+function points = generatePoints(p1, p2, res)
+    disc = max(abs(p1 - p2)./(res/10));
+    x = linspace(p1(1), p2(1), disc).';
+    y = linspace(p1(2), p2(2), disc).';
+    z = linspace(p1(3), p2(3), disc).';
+    points = [x, y, z];
+end
+
+function [c,b] = getBoxes(box)
+    c = (box(:,1:3)+box(:,4:6))/2;
+    b = c-box(:,1:3);
 end
