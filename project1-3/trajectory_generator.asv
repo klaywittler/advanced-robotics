@@ -38,7 +38,7 @@ if nargin > 2
     dt = tI(2:end) - tI(1:end-1);
     dim =  numel(p(1,:));
     n = numel(p(:,1))-1;
-    v = minsnap2(n,deg,p,dt,dim);
+    v = minsnap(n,deg,p,dt,dim);
     c = reshape(v,[3,deg,n]);
      ploting(c,tI,tFinal,deg);
 else
@@ -182,8 +182,8 @@ for i=1:n
     end
 end
 % solves the quadratic program for v
-% v = quadprog(H,zeros(dim*d*n,1),zeros(0,dim*d*n),zeros(0,1),Aeq,beq);
-v = Aeq\beq;
+v = quadprog(H,zeros(dim*d*n,1),zeros(0,dim*d*n),zeros(0,1),Aeq,beq);
+% v = Aeq\beq;
 end
 
 function [A_i1, b_i1] = Ab_iPosition(i, n, d, dt_i, w_i, w_ip1, dim)

@@ -95,8 +95,8 @@ end
 
 
 path = sub2pos(map,Q(pathIdx{1},:)); % convert path indices to coordinates
-path = pruneMap(path, map);
-path = [start;path;goal]; % append start and goal to fix discretization snap
+% prune = pruneMap(path, map);
+path = [start;prune;goal]; % append start and goal to fix discretization snap
 path = unique(path,'rows','stable');
 
 end
@@ -203,7 +203,7 @@ function pruned = pruneMap(path, map)
         current = pruned_temp(i,:);
         next = pruned_temp(i+1,:);
         d = sqrt(sum((next-current).^2));
-        pruned = [pruned;generatePoints(current, next, 7*d*map.res_xyz)];
+        pruned = [pruned;generatePoints(current, next, 10*d*map.res_xyz)];
     end
     pruned = [pruned;pruned_temp(end,:)];
 end
