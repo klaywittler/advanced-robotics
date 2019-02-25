@@ -22,8 +22,8 @@ function [ desired_state ] = trajectory_generator(t, qn, map, path)
 % path0 = path;
 
 persistent p tI c
-deg = 8; % degree of polynomial
-avgAccel = 0.28; % m/s
+deg = 4; % degree of polynomial
+avgAccel = 0.24; % m/s
 if nargin > 2
     desired_state = [];
     p = path;
@@ -38,9 +38,9 @@ if nargin > 2
     dt = tI(2:end) - tI(1:end-1);
     dim =  numel(p(1,:));
     n = numel(p(:,1))-1;
-    v = minsnap2(n,deg,p,dt,dim);
+    v = minsnap(n,deg,p,dt,dim);
     c = reshape(v,[3,deg,n]);
-     ploting(c,tI,tFinal,deg);
+%     ploting(c,tI,tFinal,deg);
 else
     if t <= tI(end)
        dtI = t-tI; % dt = t - t1;
@@ -89,9 +89,9 @@ function [v] = minsnap(n,d,w,dt,dim)
 %   @output beq - b vector from linear equality constraint A_eq v = b_eq
 %   @output H - matrix such that the integral of snap squared is .5 v^T H v
 
-ddt = d-1;
-Aeq = zeros(ddt*dim*(n+1) + dim*2*(n),dim*d*n);
-beq = zeros(ddt*dim*(n+1) + dim*2*(n),1);
+ddt = d-2;
+Aeq = zeros(ddt*dim*(n) + dim*2*(n) + (floor(ddt/2)-3)*dim,dim*d*n);
+beq = zeros(ddt*dim*(n) + dim*2*(n) + (floor(ddt/2)-3)*dim,1);
 % H = zeros(dim*d*n,dim*d*n);
 
 % calculate correct values for Aeq, beq, and H
@@ -111,61 +111,6 @@ for i=1:n
         j = j + dim*ddt;
     else
         % constraint for 0 derivatives at beginning
-        for k=1:ddt
-            [Aeq_i, beq_i] = Ab_iDerivative(1, k, n, d, 0,dim);
-            Aeq(dim*(k-1)+ j:dim*k + j-1,:) = Aeq_i; 
-            beq(dim*(k-1)+ j:dim*k + j-1,:) = beq_i;
-        end 
-        j = j + dim*ddt;
-        % constraint for 0 derivatives at end
-        for k=1:ddt
-            [Aeq_i, beq_i] = Ab_iDerivative(n, k, n, d, 0, dim);
-            Aeq(dim*(k-1)+ j:dim*k + j-1,:) = Aeq_i; 
-            beq(dim*(k-1)+ j:dim*k + j-1,:) = beq_i;
-        end 
-        j = j + dim*ddt;
-    end
-end
-% solves the quadratic program for v
-% v = quadprog(H,zeros(dim*d*n,1),zeros(0,dim*d*n),zeros(0,1),Aeq,beq);
-v = Aeq\beq;
-end
-
-function [v] = minsnap2(n,d,w,dt,dim)
-%MINSNAP(n,d,w,r,dt) calculates the polynomial coefficients for the minimum
-%snap trajectory intersecting waypoints w.
-%   @param n - total number of polynomials.
-%   @param d - number of terms in each polynomial.
-%   @param w - cell array of waypoints, containing w_i in w{i}.
-%   @param dt - cell array of delays, containing \Delta t_i in dt{i}.
-%
-%   @output v - vector of polynomial coefficients, output of quadprog.
-%   @output Aeq - A matrix from linear equality constraint A_eq v = b_eq
-%   @output beq - b vector from linear equality constraint A_eq v = b_eq
-%   @output H - matrix such that the integral of snap squared is .5 v^T H v
-
-ddt = d-1;
-Aeq = zeros(ddt*dim*(n) + dim*2*(n) + (floor(ddt/2)-2)*dim,dim*d*n);
-beq = zeros(ddt*dim*(n) + dim*2*(n) + (floor(ddt/2)-2)*dim,1);
-H = zeros(dim*d*n,dim*d*n);
-
-% calculate correct values for Aeq, beq, and H
-j = 2*dim*n + 1;
-for i=1:n
-    [Aeq_i, beq_i] = Ab_iPosition(i, n, d, dt(i), w(i,:)', w(i+1,:)', dim);
-    Aeq(2*dim*(i-1)+1:2*dim*i,:) = Aeq_i; 
-    beq(2*dim*(i-1)+1:2*dim*i,:) = beq_i;
-    H = H + 2*H_i(i, n, d, dt(i), dim);
-    if  i<n
-        % matching derivatives between polynomials
-        for k=1:ddt
-            [Aeq_i, beq_i] = Ab_iDerivative(i, k, n, d, dt(i),dim);
-            Aeq(dim*(k-1)+ j:dim*k + j-1,:) = Aeq_i; 
-            beq(dim*(k-1)+ j:dim*k + j-1,:) = beq_i;
-        end
-        j = j + dim*ddt;
-    else
-        % constraint for 0 derivatives at beginning
         for k=1:ceil(ddt/2)
             [Aeq_i, beq_i] = Ab_iDerivative(1, k, n, d, 0,dim);
             Aeq(dim*(k-1)+ j:dim*k + j-1,:) = Aeq_i; 
@@ -174,7 +119,8 @@ for i=1:n
         j = j + dim*ceil(ddt/2);
         % constraint for 0 derivatives at end
         for k=1:ceil(ddt/2)
-            [Aeq_i, beq_i] = Ab_iDerivative(n, k, n, d, 0, dim);
+            [Aeq_i, beq_i] = Ab_iDerivative(i, k, n, d, dt(i), dim);
+            Aeq_i = Aeq_i(:,1:numel(Aeq(1,:)));
             Aeq(dim*(k-1)+ j:dim*k + j-1,:) = Aeq_i; 
             beq(dim*(k-1)+ j:dim*k + j-1,:) = beq_i;
         end 
@@ -241,7 +187,7 @@ for j=k:(d-1)
     A_i2(2,2 + (i-1)*dim*d + dim*j) = (factorial(j)/factorial(j-k))*dt_i^(j-k);
     A_i2(3,3 + (i-1)*dim*d + dim*j) = (factorial(j)/factorial(j-k))*dt_i^(j-k);
 end
-if dt_i ~= 0 
+if i ~= 1 || i ~= n
     A_i2(1,1 + (i)*dim*d + dim*k) = -factorial(k);
     A_i2(2,2 + (i)*dim*d + dim*k) = -factorial(k);
     A_i2(3,3 + (i)*dim*d + dim*k) = -factorial(k);
@@ -298,8 +244,7 @@ function ploting(c,tI, tF, deg)
     crackle = zeros(3,numel(t)-1);
     pop = zeros(3,numel(t)-1);
     sev = zeros(3,numel(t)-1);
-
-    
+ 
     for i=1:numel(t)-1
         dtI = t(i)-tI; % dt = t - t1;
         j = find(dtI < 0, 1) - 1;
