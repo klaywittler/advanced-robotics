@@ -193,7 +193,7 @@ function pruned = pruneMap(pruned, map)
     %%% iterative pruning
     % even number of iterations flip path first
     % odd number of iterations flip path afterwards
-    for j=1:8
+    for j=1:6
         % refill points for more resolution in pruning
         refill = [pruned(1,:)];
         for i=1:numel(pruned(:,1))-1
