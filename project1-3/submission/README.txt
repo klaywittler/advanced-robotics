@@ -22,3 +22,8 @@ helper funcntions in trajectory_generator.m
 minisnap: assembles A and b for each polynomial to solve x = A\b by calling Ab_iPosition and Ab_iDerivative
 Ab_iPosition: returns position constraints at the beginning and end of a polynomial time interval
 Ab_iDerivative: returns derivative constraints at the beginning and end of a polynomial time interval
+
+
+/map
+mymap.txt : custom made maze like map to force certain manuevers and test out path pruning methods
+	.png files show comparison between astar and pruned path
