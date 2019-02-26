@@ -189,51 +189,32 @@ end
 %%% helper functions %%%
 %%%%%%%%%%%%%%%%%%%%%%%%
 function pruned = pruneMap(path, map)
-    refill = [path(1,:)];
-    for i=1:numel(path(:,1))-1
-        current = path(i,:);
-        next = path(i+1,:);
-        d = sqrt(sum((next-current).^2));
-        refill = [refill;generatePoints(current, next, map.res_xyz/10)];
+    pruned = path;
+    for i=1:4
+        refill = [pruned(1,:)];
+        for i=1:numel(pruned(:,1))-1
+            current = pruned(i,:);
+            next = pruned(i+1,:);
+    %         d = sqrt(sum((next-current).^2));
+            refill = [refill;generatePoints(current, next, map.res_xyz/10)];
+        end
+        refill = [refill;pruned(end,:)];
+        
+        pruned = pruneForward(refill, map);
+        
+        refill = [pruned(1,:)];
+        for i=1:numel(pruned(:,1))-1
+            current = pruned(i,:);
+            next = pruned(i+1,:);
+    %         d = sqrt(sum((next-current).^2));
+            refill = [refill;generatePoints(current, next, map.res_xyz/10)];
+        end
+        refill = [refill;pruned(end,:)];
+        
+        pruned = pruneBackward(refill, map);
     end
-    refill = [refill;path(end,:)];
     
-    pruned = pruneForward(path, map);
-
-%     pruned = pruneBackward(refill(end:-1:1,:), map);
-%     refill = [pruned(1,:)];
-%     for i=1:numel(pruned(:,1))-1
-%         current = pruned(i,:);
-%         next = pruned(i+1,:);
-%         d = sqrt(sum((next-current).^2));
-%         refill = [refill;generatePoints(current, next, map.res_xyz/10)];
-%     end
-%     refill = [refill;pruned(end,:)];
-%     pruned = refill;
-%     
-%     pruned = pruneBackward(path(end:-1:1,:), map);
-%     refill = [pruned(1,:)];
-%     for i=1:numel(pruned(:,1))-1
-%         current = pruned(i,:);
-%         next = pruned(i+1,:);
-%         d = sqrt(sum((next-current).^2));
-%         refill = [refill;generatePoints(current, next, map.res_xyz/10)];
-%     end
-%     refill = [refill;pruned(end,:)];
-%     pruned = refill;
-%     
-%         pruned = pruneBackward(path(end:-1:1,:), map);
-%     refill = [pruned(1,:)];
-%     for i=1:numel(pruned(:,1))-1
-%         current = pruned(i,:);
-%         next = pruned(i+1,:);
-%         d = sqrt(sum((next-current).^2));
-%         refill = [refill;generatePoints(current, next, map.res_xyz/10)];
-%     end
-%     refill = [refill;pruned(end,:)];
-%     pruned = refill;
-    
-%      pruned = pruneBackward(pruned(end:-1:1,:), map);
+    %%% final refill
     refill = [pruned(1,:)];
     for i=1:numel(pruned(:,1))-1
         current = pruned(i,:);
@@ -258,8 +239,8 @@ function pruned = pruneForward(path, map)
             next_index = next_index + 1;
             next = path(next_index, :);
         end
-        if  ~checkCollision(map, generatePoints(current, next, map.res_xyz/10), center, boundary)
-            path_index = next_index -1;
+        if  checkCollision(map, generatePoints(current, next, map.res_xyz/10), center, boundary)
+            path_index = next_index - 1;
         else
             path_index = next_index;
         end
