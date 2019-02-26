@@ -198,6 +198,7 @@ function pruned = pruneMap(path, map)
     end
     refill = [refill;path(end,:)];
 
+    %%% iteration 1
     pruned = pruneForward(refill(end:-1:1,:), map);
     refill = [pruned(1,:)];
     for i=1:numel(pruned(:,1))-1
@@ -207,9 +208,8 @@ function pruned = pruneMap(path, map)
         refill = [refill;generatePoints(current, next, map.res_xyz/10)];
     end
     refill = [refill;pruned(end,:)];
-    pruned = refill;
     
-    pruned = pruneBackward(pruned, map);
+    pruned = pruneBackward(refill, map);
     refill = [pruned(1,:)];
     for i=1:numel(pruned(:,1))-1
         current = pruned(i,:);
@@ -218,9 +218,9 @@ function pruned = pruneMap(path, map)
         refill = [refill;generatePoints(current, next, map.res_xyz/10)];
     end
     refill = [refill;pruned(end,:)];
-    pruned = refill;
     
-    pruned = pruneForward(pruned(end:-1:1,:), map);
+    %%% iteration 2
+    pruned = pruneForward(refill(end:-1:1,:), map);
     refill = [pruned(1,:)];
     for i=1:numel(pruned(:,1))-1
         current = pruned(i,:);
@@ -229,11 +229,8 @@ function pruned = pruneMap(path, map)
         refill = [refill;generatePoints(current, next, map.res_xyz/10)];
     end
     refill = [refill;pruned(end,:)];
-    pruned = refill;
     
-    pruned = pruneBackward(pruned, map);
-    
-        pruned = pruneForward(refill(end:-1:1,:), map);
+    pruned = pruneBackward(refill, map);
     refill = [pruned(1,:)];
     for i=1:numel(pruned(:,1))-1
         current = pruned(i,:);
@@ -242,9 +239,9 @@ function pruned = pruneMap(path, map)
         refill = [refill;generatePoints(current, next, map.res_xyz/10)];
     end
     refill = [refill;pruned(end,:)];
-    pruned = refill;
     
-    pruned = pruneBackward(pruned, map);
+    %%% iteration 3
+    pruned = pruneForward(refill(end:-1:1,:), map);
     refill = [pruned(1,:)];
     for i=1:numel(pruned(:,1))-1
         current = pruned(i,:);
@@ -253,9 +250,11 @@ function pruned = pruneMap(path, map)
         refill = [refill;generatePoints(current, next, map.res_xyz/10)];
     end
     refill = [refill;pruned(end,:)];
-    pruned = refill;
     
-    pruned = pruneForward(pruned(end:-1:1,:), map);
+    pruned = pruneBackward(refill, map);
+    
+    %%% iteration 4
+    pruned = pruneForward(refill(end:-1:1,:), map);
     refill = [pruned(1,:)];
     for i=1:numel(pruned(:,1))-1
         current = pruned(i,:);
@@ -264,9 +263,8 @@ function pruned = pruneMap(path, map)
         refill = [refill;generatePoints(current, next, map.res_xyz/10)];
     end
     refill = [refill;pruned(end,:)];
-    pruned = refill;
     
-    pruned = pruneBackward(pruned, map);
+    pruned = pruneBackward(refill, map);
     
     %%% final refill
     refill = [pruned(1,:)];
