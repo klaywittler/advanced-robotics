@@ -95,8 +95,8 @@ end
 
 
 path = sub2pos(map,Q(pathIdx{1},:)); % convert path indices to coordinates
-% prune = pruneMap(path, map);
-path = [start;prune;goal]; % append start and goal to fix discretization snap
+path = pruneMap(path, map);
+path = [start;path;goal]; % append start and goal to fix discretization snap
 path = unique(path,'rows','stable');
 
 end
@@ -126,51 +126,51 @@ function [neighbors, cost] = getNeighbors(positions, index, xSize, ySize, zSize,
 
 %%% z %%%
 if (zSize == 1) % if empty cannot move in direction
-    add1 = 0;
-    cadd1 = 0;
+    addZ = 0;
+    caddZ = 0;
 elseif (positions(index,3) == zSize) % outer boundary - move back or stay still
-    add1 = [-xSize*ySize;0]; % z index increaments every xSize*ySize
-    cadd1 = [res(3);0].^2;
+    addZ = [-xSize*ySize;0]; % z index increaments every xSize*ySize
+    caddZ = [res(3);0].^2;
 elseif (positions(index,3) == 1) % inner boundary - stay still or move forware 
-    add1 = [0; xSize*ySize]; % z index increaments every xSize*ySize
-    cadd1 = [0;res(3)].^2;
+    addZ = [0; xSize*ySize]; % z index increaments every xSize*ySize
+    caddZ = [0;res(3)].^2;
 else % free to move
-    add1= [-xSize*ySize;0;xSize*ySize]; % z index increaments every xSize*ySize
-    cadd1 = [res(3);0;res(3)].^2;
+    addZ= [-xSize*ySize;0;xSize*ySize]; % z index increaments every xSize*ySize
+    caddZ = [res(3);0;res(3)].^2;
 end
 
 %%% y %%%
 if (ySize == 1) % if empty cannot move in direction
-    add2 = 0;
-    cadd2 = 0;
+    addY = 0;
+    caddY = 0;
 elseif (positions(index,2) == ySize) % outer boundary - move back or stay still
-    add2 = [-xSize;0]; % y index increaments every xSize
-    cadd2 = [res(2);0].^2;
+    addY = [-xSize;0]; % y index increaments every xSize
+    caddY = [res(2);0].^2;
 elseif (positions(index,2) == 1) % inner boundary - stay still or move forware
-    add2 = [0; xSize]; % y index increaments every xSize
-    cadd2 = [0;res(2)].^2;
+    addY = [0; xSize]; % y index increaments every xSize
+    caddY = [0;res(2)].^2;
 else % free to move
-    add2 = [-xSize;0;xSize]; % y index increaments every xSize
-    cadd2 = [res(2);0;res(2)].^2;
+    addY = [-xSize;0;xSize]; % y index increaments every xSize
+    caddY = [res(2);0;res(2)].^2;
 end
 
 %%% x %%%
 if (xSize == 1) % if empty cannot move in direction
-    add3 = 0;
-    cadd3 = 0;
+    addX = 0;
+    caddX = 0;
 elseif (positions(index,1) == xSize) % outer boundary - move back or stay still
-    add3 = [-1;0]; % x index increaments everytime
-    cadd3 = [res(1);0].^2;
+    addX = [-1;0]; % x index increaments everytime
+    caddX = [res(1);0].^2;
 elseif (positions(index,1) == 1) % inner boundary - stay still or move forware
-    add3 = [0; 1]; % x index increaments everytime
-    cadd3 = [0;res(1)].^2;
+    addX = [0; 1]; % x index increaments everytime
+    caddX = [0;res(1)].^2;
 else % free to move
-    add3 = [-1;0;1]; % x index increaments everytime
-    cadd3 = [res(1);0;res(1)].^2;
+    addX = [-1;0;1]; % x index increaments everytime
+    caddX = [res(1);0;res(1)].^2;
 end
 
-neighbors = (index + elementwise(add3, elementwise(add2,add1))); % convole possible movements
-cost = elementwise(cadd3, elementwise(cadd2,cadd1)); 
+neighbors = (index + elementwise(addX, elementwise(addY,addZ))); % convole possible movements
+cost = elementwise(caddX, elementwise(caddY,caddZ)); 
 cost(isinf(positions(neighbors,1))) = []; % get rid of obstacle entries
 cost = sqrt(cost);
 neighbors(isinf(positions(neighbors,1))) = []; % get rid of obstacle entries
@@ -189,23 +189,60 @@ end
 %%% helper functions %%%
 %%%%%%%%%%%%%%%%%%%%%%%%
 function pruned = pruneMap(path, map)
-%     pruned_f = pruneForward(path, map, center, boundary);
-    pruned_temp = pruneBackward(path, map);
-%     dist_f = sum(sqrt(sum(diff(pruned_f, 1).^2,2)));
-%     dist_b = sum(sqrt(sum(diff(pruned_b, 1).^2,2)));
-%     if dist_f >= dist_b
-%         pruned_temp = pruned_b;
-%     else
-%         pruned_temp = pruned_f;
-%     end 
-    pruned = pruned_temp(1,:);
-    for i=1:numel(pruned_temp(:,1))-1
-        current = pruned_temp(i,:);
-        next = pruned_temp(i+1,:);
+    refill = [path(1,:)];
+    for i=1:numel(path(:,1))-1
+        current = path(i,:);
+        next = path(i+1,:);
         d = sqrt(sum((next-current).^2));
-        pruned = [pruned;generatePoints(current, next, 10*d*map.res_xyz)];
+        refill = [refill;generatePoints(current, next, map.res_xyz/10)];
     end
-    pruned = [pruned;pruned_temp(end,:)];
+    refill = [refill;path(end,:)];
+    
+    pruned = pruneForward(path, map);
+
+%     pruned = pruneBackward(refill(end:-1:1,:), map);
+%     refill = [pruned(1,:)];
+%     for i=1:numel(pruned(:,1))-1
+%         current = pruned(i,:);
+%         next = pruned(i+1,:);
+%         d = sqrt(sum((next-current).^2));
+%         refill = [refill;generatePoints(current, next, map.res_xyz/10)];
+%     end
+%     refill = [refill;pruned(end,:)];
+%     pruned = refill;
+%     
+%     pruned = pruneBackward(path(end:-1:1,:), map);
+%     refill = [pruned(1,:)];
+%     for i=1:numel(pruned(:,1))-1
+%         current = pruned(i,:);
+%         next = pruned(i+1,:);
+%         d = sqrt(sum((next-current).^2));
+%         refill = [refill;generatePoints(current, next, map.res_xyz/10)];
+%     end
+%     refill = [refill;pruned(end,:)];
+%     pruned = refill;
+%     
+%         pruned = pruneBackward(path(end:-1:1,:), map);
+%     refill = [pruned(1,:)];
+%     for i=1:numel(pruned(:,1))-1
+%         current = pruned(i,:);
+%         next = pruned(i+1,:);
+%         d = sqrt(sum((next-current).^2));
+%         refill = [refill;generatePoints(current, next, map.res_xyz/10)];
+%     end
+%     refill = [refill;pruned(end,:)];
+%     pruned = refill;
+    
+%      pruned = pruneBackward(pruned(end:-1:1,:), map);
+    refill = [pruned(1,:)];
+    for i=1:numel(pruned(:,1))-1
+        current = pruned(i,:);
+        next = pruned(i+1,:);
+%          d = sqrt(sum((next-current).^2));
+        refill = [refill;generatePoints(current, next, abs(current - next)/3)];
+    end
+    refill = [refill;pruned(end,:)];
+    pruned = refill; 
 end
 
 %Forwards
@@ -217,11 +254,15 @@ function pruned = pruneForward(path, map)
     while ~all(current == path(end, :))
         next_index = path_index+1;
         next = path(next_index, :);
-        while (next_index + 1 <= numel(path(:,1))) && ~checkCollision(map, generatePoints(current, next, map.res_xyz), center, boundary)
+        while (next_index + 1 <= numel(path(:,1))) && (next_index == path_index + 1 || ~checkCollision(map, generatePoints(current, next, map.res_xyz/10), center, boundary))
             next_index = next_index + 1;
             next = path(next_index, :);
         end
-        path_index = next_index ;
+        if  ~checkCollision(map, generatePoints(current, next, map.res_xyz/10), center, boundary)
+            path_index = next_index -1;
+        else
+            path_index = next_index;
+        end
         current = path(path_index, :);
         pruned = [pruned; current];
     end
@@ -233,10 +274,10 @@ function pruned = pruneBackward(path, map)
     path_index = 1;
     current = path(path_index, :);
     pruned = [current];
-    while ~all(current == path(end, :))
+    while any(current ~= path(end, :))
         next_index = numel(path(:,1));
         next = path(next_index, :);
-        while (next_index - 1 ~= path_index) && checkCollision(map, generatePoints(current, next, map.res_xyz), center, boundary)
+        while (next_index - 1 ~= path_index) && checkCollision(map, generatePoints(current, next, map.res_xyz/10), center, boundary)
             next_index = next_index - 1;
             next = path(next_index, :);
         end
@@ -248,13 +289,12 @@ end
 
 function collides = checkCollision(map, points, c, b)
     collides = false;
-%     [c,b] = getBoxes(map.blocks);
 %     p = reshape(points,[1,3,numel(points(:,1))]);
-%     if any(all(p <= c + b + map.margin,2) & all(p >= c - b - map.margin,2),'all')
+%     if any(all(p <= c+b+map.margin & p >= c-b-map.margin ,2),'all')
 %        collides = true;
 %     end
     for ii = 1:numel(points(:, 1))
-        if any(all(points(ii,:) <= c + b + map.margin,2) & all(points(ii,:) >= c - b - map.margin,2))
+        if any(all(points(ii,:) <= c+b+map.margin & points(ii,:) >= c-b-map.margin,2))
            collides = true;
            return
         end
@@ -262,10 +302,10 @@ function collides = checkCollision(map, points, c, b)
 end
 
 function points = generatePoints(p1, p2, res)
-    disc = max(abs(p1 - p2)./(res/10));
-    x = linspace(p1(1), p2(1), disc).';
-    y = linspace(p1(2), p2(2), disc).';
-    z = linspace(p1(3), p2(3), disc).';
+    num = max(abs(p1 - p2)./(res));
+    x = linspace(p1(1), p2(1), num).';
+    y = linspace(p1(2), p2(2), num).';
+    z = linspace(p1(3), p2(3), num).';
     points = [x, y, z];
 end
 
