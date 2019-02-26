@@ -42,15 +42,16 @@ function [F, M, trpy, drpy] = controller(qd, t, qn, params)
 % has a built-in attitude controller). Best to fill them in already
 % during simulation.
 
-phi_des = 0;
-theta_des = 0;
 psi_des = qd{qn}.yaw_des;
 
-kp = diag([9; 9; 9]); % [ 9 ; 9 ; 9]
-kd = diag([6; 6; 6]); % [5 ; 5; 6];
+%%% gains
+kp = diag([10; 10; 10]); % [ 9 ; 9 ; 9]
+kd = 2*sqrt(kp);
+% kd = diag([6; 6; 6]); % [5 ; 5; 6];
 
 kr = diag([2800; 2800; 2800]); % [4200; 4200; 4200]   [125; 125; 125] 
-kw = diag([106; 106; 106]); % [130; 130; 130] [22; 22; 22]
+kw = 2*sqrt(kr);
+% kw = diag([106; 106; 106]); % [130; 130; 130] [22; 22; 22]
 
 R = eulzxy2rotmat(qd{qn}.euler);
 
@@ -64,16 +65,15 @@ b2_des = cross(b3_des,a_psi)/norm(cross(b3_des,a_psi));
 b1_des = cross(b2_des,b3_des);
 
 R_des = [b1_des b2_des b3_des];
+eul = rotmat2eulzxy(R_des);
+phi_des = eul(1);
+theta_des = eul(2);
+psi_des = eul(3);
 
 e_R = veemap(0.5*(R_des'*R - R'*R_des))';
 
 e_w = qd{qn}.omega;
 
-%
-%
-%
-
-% u = zeros(4,1); % control input u, you should fill this in
 b3 = R(:,3);
 u1 = b3'*F_des;
 u2 = -params.I*(kr*e_R + kw*e_w);

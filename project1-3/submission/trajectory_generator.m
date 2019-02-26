@@ -23,7 +23,7 @@ function [ desired_state ] = trajectory_generator(t, qn, map, path)
 
 persistent p tI c
 deg = 4; % degree of polynomial
-avgAccel = 0.3; % m/s
+avgAccel = 0.342; % m/s
 if nargin > 2
     p = path;
     p2 = p(2:end,:);
@@ -31,28 +31,29 @@ if nargin > 2
     d = sqrt(sum((p2-p1).^2, 2));
     cumDist = cumsum(d);
     totalDist = sum(d);
-    tFinal = sqrt(2*totalDist/avgAccel);
+    tFinal = sqrt(2*totalDist/avgAccel); % time as a ratio of distances and average acceleration
     ratio = cumDist/totalDist;
-    tI = [0;ratio*tFinal];
+    tI = [0;ratio*tFinal]; % time interval for each segment of waypoints
     dt = tI(2:end) - tI(1:end-1);
     dim =  numel(p(1,:));
     n = numel(p(:,1))-1;
-    v = minsnap(n,deg,p,dt,dim);
+    v = minsnap(n,deg,p,dt,dim); % compute polynomial coefficients
     c = reshape(v,[3,deg,n]);
     desired_state = [];
 else
     if t <= tI(end)
-       dtI = t-tI; % dt = t - t1;
-        j = find(dtI < 0, 1) - 1;
+       dtI = t-tI;
+        j = find(dtI < 0, 1) - 1; % determine which segment the quadrotor is in
         if isempty(j)
             j = numel(dtI);
         end
         dt = t - tI(j);
-        pow0 = 0:deg-1; 
-        pow1 = pow0 - 1;
-        pow2 = pow1 - 1;
+        pow0 = 0:deg-1; % constant powers
+        pow1 = pow0 - 1; % 1 derivative powers
+        pow2 = pow1 - 1; % second derivative powers
         pow1(pow1 < 0) = [];
         pow2(pow2 < 0) = [];
+        % utilize polynomial coefficients to determine control inputs
         pos = c(:,:,j)*(dt.^pow0)';
         vel = c(:,:,j)*([0 ,pow0(2:end).*(dt.^(pow1))])';
         acc = c(:,:,j)*([0, 0, pow0(3:end).*pow1(2:end).*(dt.^(pow2))])';
@@ -76,24 +77,24 @@ end
 %%% helper functions %%%
 %%%%%%%%%%%%%%%%%%%%%%%%
 function [v] = minsnap(n,d,w,dt,dim)
-%MINSNAP(n,d,w,r,dt) calculates the polynomial coefficients for the minimum
+%minisnap(n,d,w,r,dt) calculates the polynomial coefficients for the minimum
 %snap trajectory intersecting waypoints w.
 %   @param n - total number of polynomials.
 %   @param d - number of terms in each polynomial.
-%   @param w - cell array of waypoints, containing w_i in w{i}.
-%   @param dt - cell array of delays, containing \Delta t_i in dt{i}.
-%
+%   @param w - array of waypoints, containing w_i in w(i).
+%   @param dt - array of delays, containing \Delta t_i in dt(i).
+%   @param dim - dimension of the space.
 %   @output v - vector of polynomial coefficients, output of quadprog.
-%   @output Aeq - A matrix from linear equality constraint A_eq v = b_eq
-%   @output beq - b vector from linear equality constraint A_eq v = b_eq
-%   @output H - matrix such that the integral of snap squared is .5 v^T H v
-    ddt = d-2;
+
+    ddt = d-2; % match up to two derivatives -- makes the final matrix square for easy inversion
     Aeq = zeros(ddt*dim*(n) + dim*2*(n) + (floor(ddt/2)-3)*dim,dim*d*n);
     beq = zeros(ddt*dim*(n) + dim*2*(n) + (floor(ddt/2)-3)*dim,1);
     % H = zeros(dim*d*n,dim*d*n);
+    
     % calculate correct values for Aeq, beq, and H
-    j = 2*dim*n + 1;
+    j = 2*dim*n + 1; % beginning of derivative indexes
     for i=1:n
+        % position constraints
         [Aeq_i, beq_i] = Ab_iPosition(i, n, d, dt(i), w(i,:)', w(i+1,:)', dim);
         Aeq(2*dim*(i-1)+1:2*dim*i,:) = Aeq_i; 
         beq(2*dim*(i-1)+1:2*dim*i,:) = beq_i;
@@ -107,6 +108,7 @@ function [v] = minsnap(n,d,w,dt,dim)
             end
             j = j + dim*ddt;
         else
+            % end constraints are matched to ddt/2 derivatives
             % constraint for 0 derivatives at beginning
             for k=1:ceil(ddt/2)
                 [Aeq_i, beq_i] = Ab_iDerivative(1, k, n, d, 0,dim);
@@ -124,21 +126,22 @@ function [v] = minsnap(n,d,w,dt,dim)
             j = j + dim*ceil(ddt/2);
         end
     end
-    % solves the quadratic program for v
+    % solves for v
     % v = quadprog(H,zeros(dim*d*n,1),zeros(0,dim*d*n),zeros(0,1),Aeq,beq);
     v = Aeq\beq;
 end
 
 function [A_i1, b_i1] = Ab_iPosition(i, n, d, dt_i, w_i, w_ip1, dim)
-%AB_I1(i, n, d, dt_i, w_i, w_ip1) computes the linear equality constraint
-% constants to require the ith polynomial to meet waypoints w_i and w_{i+1}
+%Ab_iPosition(i, n, d, dt_i, w_i, w_ip1) computes the linear equality constraint
+% constants to require the ith polynomial to meet waypoints w_i and w_(i+1)
 % at it's endpoints.
 %   @param i - index of the polynomial.
 %   @param n - total number of polynomials.
 %   @param d - number of terms in each polynomial.
 %   @param dt_i - \Delta t_i, duration of the ith polynomial.
 %   @param w_i - waypoint at the start of the ith polynomial.
-%   @param w_ip1 - w_{i+1}, waypoint at the end of the ith polynomial.
+%   @param w_ip1 - w_(i+1), waypoint at the end of the ith polynomial.
+%   @param dim - dimension of the space.
 %
 %   @output A_i1 - A matrix from linear equality constraint A_i1 v = b_i1
 %   @output b_i1 - b vector from linear equality constraint A_i1 v = b_i1
@@ -161,7 +164,7 @@ function [A_i1, b_i1] = Ab_iPosition(i, n, d, dt_i, w_i, w_ip1, dim)
 end
 
 function [A_i2, b_i2] = Ab_iDerivative(i, k, n, d, dt_i, dim)
-%AB_1(i, n, d, dt_i, w_i, w_ip1) computes the linear equality constraint
+%Ab_iDerivative(i, n, d, dt_i, w_i, w_ip1) computes the linear equality constraint
 % constants to require the kth derivatives of the ith and (i+1)th
 % polynomials to equal where they meet.
 %   @param i - index of the polynomial.
@@ -169,6 +172,7 @@ function [A_i2, b_i2] = Ab_iDerivative(i, k, n, d, dt_i, dim)
 %   @param n - total number of polynomials.
 %   @param d - number of terms in each polynomial.
 %   @param dt_i - \Delta t_i, duration of the ith polynomial.
+%   @param dim - dimension of the space.
 %
 %   @output A_i2 - A matrix from linear equality constraint A_i2 v = b_i2
 %   @output b_i2 - b vector from linear equality constraint A_i2 v = b_i2
@@ -193,6 +197,7 @@ function [H_i] = H_i(i, n, d, dt_i, dim)
 %   @param n - total number of polynomials.
 %   @param d - number of terms in each polynomial.
 %   @param dt_i - \Delta t_i, duration of the ith polynomial.
+%   @param dim - dimension of the space.
 %
 %   @output H_i - matrix such that the snap squared integral is equal to
 %   v^T H_i v

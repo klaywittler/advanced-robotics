@@ -189,12 +189,10 @@ end
 %%% helper functions %%%
 %%%%%%%%%%%%%%%%%%%%%%%%
 function pruned = pruneMap(pruned, map)
-    [center,boundary] = getBoxes(map.blocks); % get obstacle constraints to pass along to functions
+    [center,boundary] = getBoxes(map.blocks);
     %%% iterative pruning
-    % even number of iterations flip path first
-    % odd number of iterations flip path afterwards
-    for j=1:8
-        % refill points for more resolution in pruning
+    for j=1:6
+        % refill points for more resolut
         refill = [pruned(1,:)];
         for i=1:numel(pruned(:,1))-1
             current = pruned(i,:);
@@ -205,7 +203,7 @@ function pruned = pruneMap(pruned, map)
         
         pruned = pruneForward(refill(end:-1:1,:), map, center, boundary);
         
-        % refill points for more resolution in pruning
+        % refill points
         refill = [pruned(1,:)];
         for i=1:numel(pruned(:,1))-1
             current = pruned(i,:);
@@ -217,7 +215,7 @@ function pruned = pruneMap(pruned, map)
         pruned = pruneBackward(refill, map, center, boundary);
     end
     
-    %%% final point refill for close path fit with polynomials in trajectory_generator.m
+    %%% final point refill
     refill = [pruned(1,:)];
     for i=1:numel(pruned(:,1))-1
         current = pruned(i,:);
