@@ -22,8 +22,10 @@ helper funcntions in trajectory_generator.m
 minisnap: assembles A and b for each polynomial to solve x = A\b by calling Ab_iPosition and Ab_iDerivative
 Ab_iPosition: returns position constraints at the beginning and end of a polynomial time interval
 Ab_iDerivative: returns derivative constraints at the beginning and end of a polynomial time interval
+	reference: MEAM 517 - Control and Optimization w/ Application to Robotics
+		adapted previous code to incorporate 3 dimensional trajectory generation and flexible inputs of polynomial order to be solved
 
 
 /map
 mymap.txt : custom made maze like map to force certain manuevers and test out path pruning methods
-	.png files show comparison between astar and pruned path
+mymap.png : shows the planned pruned path and the quadrotors trajectory through it

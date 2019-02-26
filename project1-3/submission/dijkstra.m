@@ -190,7 +190,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%
 function pruned = pruneMap(path, map)
     pruned = path;
-    for i=1:4
+    for i=1:6
         refill = [pruned(1,:)];
         for i=1:numel(pruned(:,1))-1
             current = pruned(i,:);
@@ -219,8 +219,8 @@ function pruned = pruneMap(path, map)
     for i=1:numel(pruned(:,1))-1
         current = pruned(i,:);
         next = pruned(i+1,:);
-%          d = sqrt(sum((next-current).^2));
-        refill = [refill;generatePoints(current, next, abs(current - next)/3)];
+         d = sqrt(sum((next-current).^2));
+        refill = [refill;generatePoints(current, next, abs(current - next)/(ceil(d)))];
     end
     refill = [refill;pruned(end,:)];
     pruned = refill; 
