@@ -95,8 +95,8 @@ end
 
 
 path = sub2pos(map,Q(pathIdx{1},:)); % convert path indices to coordinates
-path = pruneMap(path, map);
 path = [start;path;goal]; % append start and goal to fix discretization snap
+path = pruneMap(path, map);
 path = unique(path,'rows','stable');
 
 end
