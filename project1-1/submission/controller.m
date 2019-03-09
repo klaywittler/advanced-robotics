@@ -64,6 +64,10 @@ b2_des = cross(b3_des,a_psi)/norm(cross(b3_des,a_psi));
 b1_des = cross(b2_des,b3_des);
 
 R_des = [b1_des b2_des b3_des];
+eul = rotmat2eulzxy(R_des);
+phi_des = eul(1);
+theta_des = eul(2);
+psi_des = eul(3);
 
 e_R = veemap(0.5*(R_des'*R - R'*R_des))';
 

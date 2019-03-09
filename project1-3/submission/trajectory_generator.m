@@ -22,7 +22,7 @@ function [ desired_state ] = trajectory_generator(t, qn, map, path)
 % path0 = path;
 
 persistent p tI c
-deg = 4; % degree of polynomial
+deg = 8; % degree of polynomial
 avgAccel = 0.3 ; % m/s
 if nargin > 2
     p = path;

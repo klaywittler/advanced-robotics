@@ -5,17 +5,17 @@ addpath(genpath('./'));
 
 %% Plan path
 disp('Planning ...');
-map = load_map('mymap.txt', 0.1, 1, 0.25);
-% map = load_map('map1.txt', 0.1, 1, 0.25);
+% map = load_map('mymap.txt', 0.1, 1, 0.25);
+map = load_map('map1.txt', 0.1, 1, 0.25);
 % start = {[0, 6, 2]}; % map4
 % stop = {[20, 0, 2]}; % map4
 % start = {[-2.5 0.0 0.0]};
 % stop = {[3 -1.0 1.0]};
-start = {[0.0, 0, 0.2]}; % my map
-stop = {[12.0, 2.0, 5.5]}; % my map
+% start = {[0.0, 0, 0.2]}; % my map
+% stop = {[12.0, 2.0, 5.5]}; % my map
 
-% start = {[0.0, -4.9, 0.2]}; % map 1
-% stop = {[8.0, 18.0, 3.0]}; % map 1
+start = {[0.0, -4.9, 0.2]}; % map 1
+stop = {[8.0, 18.0, 3.0]}; % map 1
 
 nquad = length(start);
 for qn = 1:nquad

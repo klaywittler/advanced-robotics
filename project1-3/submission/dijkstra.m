@@ -38,8 +38,8 @@ vs = getIndex(pos2sub(map,start),Q); % index of starting position
 vg = getIndex(pos2sub(map,goal),Q); % index of goal position
 
 if astar
-%     h = vecnorm(Q-Q(vg,:),1,2); % euclidean heuristic
-    h = sum((sub2pos(map,Q) - goal).^2,2); % l2
+    h = vecnorm(Q-Q(vg,:),2,2); % euclidean heuristic
+%     h = sum((sub2pos(map,Q) - goal).^2,2); % l2
 %     h = sum(abs(sub2pos(map,Q) - goal),2); % l1
 else
     h = zeros(size(g)); % heuristic of zero for dijkstra
@@ -193,7 +193,7 @@ function pruned = pruneMap(pruned, map)
     %%% iterative pruning
     % even number of iterations flip path first
     % odd number of iterations flip path afterwards
-    for j=1:6
+    for j=1:4
         % refill points for more resolution in pruning
         refill = [pruned(1,:)];
         for i=1:numel(pruned(:,1))-1
