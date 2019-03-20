@@ -1,7 +1,5 @@
 # advanced-robotics
 
-Klayton Wittler - kwittler
-
 ## Project 1 Phase 1
 
 controller.m : Implemented geometric nonlinear controller
