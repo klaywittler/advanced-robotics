@@ -19,7 +19,7 @@ end
 [~, ~ , V] = svd (A) ;
 
 
-H = reshape(V(:,end),[3,3])';
+H = reshape(V(:,end)./V(end,end),[3,3])';
 
 end
 

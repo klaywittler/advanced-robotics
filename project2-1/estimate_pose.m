@@ -35,7 +35,9 @@ else
     H = estimate_homography(pA,p);
     [R,T] = estimate_transformation(H);
     
+%     pC = varargin{3}'*([0;0;0] - varargin{4});
     pC = varargin{3}*[0;0;0] + varargin{4};
+%     pW = R*pC + T;
     pW = R'*(pC - T);
     pos = pW(1:3);
     q = rot2quat(R);
