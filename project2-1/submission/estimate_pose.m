@@ -23,9 +23,9 @@ function [pos, q] = estimate_pose(sensor, varargin)
 %   pos - 3x1 position of the quadrotor in world frame
 %   q   - 4x1 quaternion of the quadrotor [w, x, y, z] where q = w + x*i + y*j + z*k
 
-if isempty(sensor.id)
-    pos = zeros(3,0);
-    q = zeros(4,0);
+if isempty(sensor.id) || sensor.is_ready ~= 1
+    pos = [];
+    q = [];
 else
     K = varargin{1};
     pA = varargin{2}(:,:,sensor.id + 1);
@@ -35,12 +35,11 @@ else
     H = estimate_homography(pA,p);
     [R,T] = estimate_transformation(H);
     
-%     pC = varargin{3}'*([0;0;0] - varargin{4});
     pC = varargin{3}*[0;0;0] + varargin{4};
-%     pW = R*pC + T;
     pW = R'*(pC - T);
     pos = pW(1:3);
-    q = rot2quat(R);
+    q = rot2quat(R');
+%     q = quatMult(quatMult(q,[1;0;0;0]),quatCong(q));
 end
 
 end
