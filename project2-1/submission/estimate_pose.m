@@ -20,6 +20,10 @@ function [pos, q] = estimate_pose(sensor, varargin)
 %              init_script by doing
 %              estimate_pose_handle = ...
 %                  @(sensor) estimate_pose(sensor, your personal input arguments);
+%               varargin{1} - 3x3 camera intrinsics matrix
+%               varargin{2} - April tag map
+%               varargin{3} - 3x3 rotation matrix from imu to camera
+%               varargin{4} - 3x1 translation vector from camerat to imu
 %   pos - 3x1 position of the quadrotor in world frame
 %   q   - 4x1 quaternion of the quadrotor [w, x, y, z] where q = w + x*i + y*j + z*k
 

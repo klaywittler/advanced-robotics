@@ -1,9 +1,12 @@
 function [q] = rot2quat(R)
-%ROT2QUAT Summary of this function goes here
-%   Detailed explanation goes here
+%ROT2QUAT converts a rotation matrix to quaternion representation
+% not robust to singularities as it converts to axis-angle first
+%   Input:
+%       R: 3x3 rotation matrix
+%   Output:
+%       q: 4x1 unit quaternion
 
 angle = acos((trace(R) - 1)/2);
-% [V,D] = eig(R);
 axis_hat = (R-R')/(2*sin(angle));
 axis = veemap(axis_hat);
 
