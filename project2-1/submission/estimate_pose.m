@@ -38,8 +38,7 @@ else
     pC = varargin{3}*[0;0;0] + varargin{4};
     pW = R'*(pC - T);
     pos = pW(1:3);
-    q = rot2quat(R');
-%     q = quatMult(quatMult(q,[1;0;0;0]),quatCong(q));
+    q = rot2quat(R'*varargin{3});
 end
 
 end

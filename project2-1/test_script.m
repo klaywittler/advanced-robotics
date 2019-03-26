@@ -11,7 +11,7 @@ load('data/studentdata1.mat');
 load('aprilTagMap.mat');
 K = [311.0520, 0, 201.8724; 0, 311.3885, 113.6210; 0, 0, 1];
 T = [-0.04; 0; -0.03];
-R = eulzxy2rot([0,pi,-pi/4]);
+R = eulzxy2rot([pi,0,-44.5*pi/180]);
   
 estimate_pose_handle = @(sensor) estimate_pose(sensor,K, pA, R, T);
 
