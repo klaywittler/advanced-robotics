@@ -28,8 +28,10 @@ function [pos, q] = estimate_pose(sensor, varargin)
 %   q   - 4x1 quaternion of the quadrotor [w, x, y, z] where q = w + x*i + y*j + z*k
 
 if isempty(sensor.id) || sensor.is_ready ~= 1
-    pos = [];
-    q = [];
+%     pos = [];
+%     q = [];
+    pos = zeros(3,0);
+    q = zeros(4,0);
 else
     K = varargin{1};
     pA = varargin{2}(:,:,sensor.id + 1);
