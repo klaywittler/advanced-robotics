@@ -44,21 +44,14 @@ else
     pA = varargin{2}(:,:,sensor.id + 1);
     pA = reshape(permute(pA,[1,3,2]),[2,5*numel(sensor.id)]);
     
-%     dt = lowpass(sensor.t - t,1,2.2);
+    dt = lowpass(sensor.t - t,1,2.2);
 %     dt = sensor.t - t;
-    dt = 0.0205;
     [points,point_validity] = tracker(sensor.img);
+    dp = (points(point_validity,:) - prevPoints(point_validity,:))/dt;
     
-    valid_points = (K\[points(point_validity,:), ones(numel(points(point_validity,1)),1)]')';
-    prev_valid_points = (K\[prevPoints(point_validity,:), ones(numel(prevPoints(point_validity,1)),1)]')';
-    dp = (valid_points(:,1:2) - prev_valid_points(:,1:2))/dt;
-    
+    p = points(point_validity,:), ones(numel(points(point_validity,1)))]
     [R,T] = getTransformation(sensor,pA,K);
-%     R = varargin{3}*R;
-%     T = varargin{3}*T + varargin{4};
-    R = varargin{3}'*R;
-    T = varargin{3}'*(T - varargin{4});
-    [v, inliers] = motionRANSAC(valid_points(:,1:2),dp,K,R,T);
+    [v, inliers] = motionRANSAC(points(point_validity,:),dp,K,R,T);
     
     if sum(point_validity) < 500
         disp('adding points')

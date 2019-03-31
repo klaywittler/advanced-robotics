@@ -2,8 +2,8 @@ function [v, bestInliers] = motionRANSAC(p, dp, K, R, T)
 %RANSAC Summary of this function goes here
 %   Detailed explanation goes here
 sampleSize = 3;
-eps = 10^(-4);
-iter = 500;
+eps = 2*10^(0);
+iter = 1000;
 bestNInliers = 0;
 A = getA(p,K,R,T);
 

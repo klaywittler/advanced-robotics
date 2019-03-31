@@ -36,10 +36,7 @@ else
     K = varargin{1};
     pA = varargin{2}(:,:,sensor.id + 1);
     pA = reshape(permute(pA,[1,3,2]),[2,5*numel(sensor.id)]);
-    p = K\[sensor.p0,sensor.p1,sensor.p2,sensor.p3,sensor.p4;ones(1,5*numel(sensor.id))];
-    p = p(1:2,:);
-    H = estimate_homography(pA,p);
-    [R,T] = estimate_transformation(H);
+    [R,T] = getTransformation(sensor,pA,K);
     
     pC = varargin{3}*[0;0;0] + varargin{4};
     pW = R'*(pC - T);
