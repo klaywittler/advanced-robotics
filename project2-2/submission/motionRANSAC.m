@@ -43,15 +43,20 @@ function d = d(dp,p,v,A)
 end
 
 function A = getA(p,K,R,T)
-    b = K(1:2,1:2)*T(1:2);
-    B = [K(1,1);K(2,2)].*R(1:2,1:2);
+%     b = K(1:2,1:2)*T(1:2);
+%     B = [K(1,1);K(2,2)].*R(1:2,1:2);
     
     A = zeros(numel(p(:,1)),2,6);
     for i=1:numel(p(:,1))
-           uc = K(1:2,3) - p(i,:)';
-           Bp = B + sum(R(1:2,3)*uc')';
-           bp = b + uc*T(3);
+%            uc = K(1:2,3) - p(i,:)';
+%            Bp = B + sum(R(1:2,3)*uc')';
+%            bp = b + uc*T(3);
+%            z = R(1:2,3)'*(Bp\bp) + T(3);
+           uc = p(i,:)';
+           Bp = R(1:2,1:2) + sum(R(1:2,3)*uc')';
+           bp = T(1:2) + uc*T(3);
            z = R(1:2,3)'*(Bp\bp) + T(3);
+           
            A(i,:,:) = [-1/z, 0, p(i,1)/z, p(i,1)*p(i,2), -(1 + p(i,1)^2), p(i,2);
                             0, -1/z, p(i,2)/z, 1+p(i,2)^2, -p(i,1)*p(i,2), -p(i,1)]; 
     end
