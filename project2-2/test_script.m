@@ -10,7 +10,7 @@ T = [-0.04; 0; -0.03];
 R = eulzxy2rot([pi,0,-44.5*pi/180]);
   
 estimate_pose_handle = @(sensor) estimate_pose(sensor, K, pA, R, T);
-estimate_vel_handle = @(sensor) estimate_vel(sensor, K, pA, R, T);
+estimate_vel_handle = @(sensor) estimate_vel(sensor, K, pA);
 
 pos = zeros(3,numel(data));
 q = zeros(4, numel(data));
