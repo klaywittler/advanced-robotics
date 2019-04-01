@@ -27,7 +27,7 @@ end
 profile report
 profile off
 
-disp(mean(elapsedTime))
+disp(1000*mean(elapsedTime))
 t = [data.t];
 % qVicon = zeros(4,numel(time));
 % for i=1:numel(time)
