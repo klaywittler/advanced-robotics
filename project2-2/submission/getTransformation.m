@@ -5,8 +5,6 @@ function [R,T] = getTransformation(sensor,pA,K)
     p = p(1:2,:);
     H = estimate_homography(pA,p);
     [R,T] = estimate_transformation(H);
-%     R = R';
-%     T = -R'*T;
 end
 
 function [ H ] = estimate_homography(video_pts, logo_pts)

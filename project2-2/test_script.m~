@@ -23,8 +23,6 @@ for i=1:numel(data)
     [vel(:,i), omg(:,i) ] = estimate_vel_handle(data(i)); 
     toc
 end 
-profile report
-profile off
  
 t = [data.t];
 % qVicon = zeros(4,numel(time));
