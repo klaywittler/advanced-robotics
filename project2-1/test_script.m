@@ -13,10 +13,17 @@ estimate_pose_handle = @(sensor) estimate_pose(sensor,K, pA, R, T);
 
 pos = zeros(3,numel(data));
 q = zeros(4, numel(data));
+elapsedTime = zeros(1, numel(data));
+profile on
 for i=1:numel(data)
-    [pos(:,i), q(:,i) ] = estimate_pose_handle(data(i));   
+    tic
+    [pos(:,i), q(:,i) ] = estimate_pose_handle(data(i)); 
+    elapsedTime(i) = toc;
 end
- 
+profile report
+profile off
+
+disp(1000*mean(elapsedTime))
 t = [data.t];
 qVicon = zeros(4,numel(time));
 for i=1:numel(time)
