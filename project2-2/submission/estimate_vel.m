@@ -36,8 +36,8 @@ elseif isempty(tracker)
     initialize(tracker,points.Location,sensor.img)
     prevPoints = points.Location;
     t = sensor.t;
-    vel = zeros(3,1); % make zeros(3,0); for submission 
-    omg = zeros(3,1);
+    vel = zeros(3,0); % make zeros(3,0); for submission 
+    omg = zeros(3,0);
 else
     K = varargin{1};
     pA = varargin{2}(:,:,sensor.id + 1);
@@ -55,7 +55,7 @@ else
     [R,T] = getTransformation(sensor,pA,K);
     [v, ~] = motionRANSAC(prev_valid_points(:,1:2),dp,R,T);
        
-    if sum(point_validity) < 35
+    if sum(point_validity) < 30
         corners = detectHarrisFeatures(sensor.img);
         corners =  corners.selectStrongest(50);
         points = corners.Location;

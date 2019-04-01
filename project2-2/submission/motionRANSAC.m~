@@ -9,9 +9,8 @@ function [v, bestInliers] = motionRANSAC(p, dp, R, T)
 % largest consensus set
 sampleSize = 3;
 eps = 10^(-4);
-iter = 250;
+iter = 300;
 bestNInliers = 0;
-minNInliers = size(p,1)*0.5;
 bestError = 10000;
 A = getA(p,R,T);
 
@@ -30,10 +29,9 @@ for i=1:iter
     
     curNInliers = length(curInliers);
 
-    if curNInliers > bestNInliers || (avgError < bestError && curNInliers >= minNInliers)
+    if curNInliers > bestNInliers || (avgError < bestError && )
         bestNInliers = curNInliers;
-        bestInliers = curInliers; 
-        bestError = avgError;
+        bestInliers = curInliers;     
     end
 end
 
