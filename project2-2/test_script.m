@@ -16,16 +16,18 @@ pos = zeros(3,numel(data));
 q = zeros(4, numel(data));
 vel = zeros(3,numel(data));
 omg = zeros(3, numel(data));
+elapsedTime = zeros(1, numel(data));
 profile on
 for i=1:numel(data)
     tic
 %     [pos(:,i), q(:,i) ] = estimate_pose_handle(data(i)); 
     [vel(:,i), omg(:,i) ] = estimate_vel_handle(data(i)); 
-    toc
+    elapsedTime(i) = toc;
 end 
 profile report
 profile off
- 
+
+disp(mean(elapsedTime))
 t = [data.t];
 % qVicon = zeros(4,numel(time));
 % for i=1:numel(time)
