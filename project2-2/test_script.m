@@ -27,7 +27,7 @@ end
 profile report
 profile off
 
-disp(1000*mean(elapsedTime))
+disp(['Average run time (ms): ',  num2str(1000*mean(elapsedTime))]);
 t = [data.t];
 % qVicon = zeros(4,numel(time));
 % for i=1:numel(time)
