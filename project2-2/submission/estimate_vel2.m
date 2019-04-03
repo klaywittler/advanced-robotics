@@ -36,18 +36,17 @@ elseif isempty(tracker)
     initialize(tracker,points.Location,sensor.img)
     prevPoints = points.Location;
     t = sensor.t;
-    stm1 = 0.0205;
-    vm1 = zeros(3,1);
-    omgm1 = zeros(3,1);
+    stm1 = 0.02*ones(4,1);
+    vm1 = zeros(3,4);
+    omgm1 = zeros(3,4);
     vel = zeros(3,1); % make zeros(3,0); for submission 
     omg = zeros(3,1);
 else
-%     dt = 0.0205; % 50 Hz
-    alpha = 0.20;
-    beta = 0.70;
-    
+    w = [0.025; 0.025; 0.10; 0.85];
     dt = sensor.t - t;
-    st = alpha*dt + (1-alpha)*stm1;
+    stm1 = [stm1(2), stm1(3), stm1(4), dt];
+    st = stm1*w;
+    stm1(end) = st;
     
     K = varargin{1};
     pA = varargin{2}(:,:,sensor.id + 1);
@@ -58,16 +57,8 @@ else
     o1 = ones(numel(points(validity,1)),1);
     valid_points = (K\[points(validity,:), o1]')';
     prev_valid_points = (K\[prevPoints(validity,:), o1]')';
-%     valid_points = [(points(point_validity,1)- K(1,3))/K(1,1), (points(point_validity,2)- K(2,3))/K(2,2)];
-%     prev_valid_points = [(prevPoints(point_validity,1)- K(1,3))/K(1,1), (prevPoints(point_validity,2)- K(2,3))/K(2,2)];
     dp = (valid_points(:,1:2) - prev_valid_points(:,1:2))/st;    
     
-%     out = insertMarker(sensor.img,points(validity, :),'+');
-%     figure()
-%     imshow(out)
-%     hold on
-%     quiver(x,y,u,v)
-     
     p = K\[sensor.p0,sensor.p1,sensor.p2,sensor.p3,sensor.p4;ones(1,5*numel(sensor.id))];
     p = p(1:2,:);
     H = estimate_homography(pA,p);
@@ -81,15 +72,16 @@ else
         setPoints(tracker,points);   
     end
     
+    vm1 = [vm1(:,1), vm1(:,2), vm1(:,3), R'*v(1:3)];
+    omgm1 = [omgm1(:,1), omgm1(:,2), omgm1(:,3), R'*v(4:6)];
+    vel = vm1*w;
+    omg = omgm1*w;
     
-    vel = beta*R'*v(1:3) + (1-beta)*vm1;
-    omg = beta*R'*v(4:6) + (1-beta)*omgm1;
-    
-    vm1 = vel;
-    omgm1 = omg;
+    vm1(:,end) = vel;
+    omgm1(:,end) = omg;
+
     prevPoints = points;
     t = sensor.t;
-    stm1 = st;
 end
 
 end

@@ -39,7 +39,7 @@ end
 
 Abest = reshape(permute(A(bestInliers,:,:),[2,1,3]),[bestNInliers*numel(p(1,:)),6]);
 v = estimate_velocity(dp(bestInliers,:),Abest);
-% disp(['Best nu mber of inliers: ', num2str(bestNInliers), '/', num2str(size(p,1))]); 
+% disp(['Best number of inliers: ', num2str(bestNInliers), '/', num2str(size(p,1))]); 
 
 end
 
