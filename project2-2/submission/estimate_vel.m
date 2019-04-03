@@ -25,13 +25,14 @@ function [vel, omg] = estimate_vel(sensor, varargin)
 %   vel - 3x1 velocity of the quadrotor in world frame
 %   omg - 3x1 angular velocity of the quadrotor
 persistent tracker prevPoints t stm1 vm1 omgm1
+nPoints = 100;
 
 if isempty(sensor.id) || sensor.is_ready ~= 1
     vel = zeros(3,0);
     omg = zeros(3,0);
 elseif isempty(tracker)    
     points = detectFASTFeatures(sensor.img);
-    points = points.selectStrongest(50);
+    points = points.selectStrongest(nPoints);
     tracker = vision.PointTracker;
     initialize(tracker,points.Location,sensor.img)
     prevPoints = points.Location;
@@ -39,36 +40,37 @@ elseif isempty(tracker)
     stm1 = 0.0205;
     vm1 = zeros(3,1);
     omgm1 = zeros(3,1);
-    vel = zeros(3,1); % make zeros(3,0); for submission 
-    omg = zeros(3,1);
+    vel = zeros(3,0); % make zeros(3,0); for submission 
+    omg = zeros(3,0);
 else
-    alpha = 0.20;
+%     alpha = 0.20;
     beta = 0.30;
     gamma = 0.70;  
-    dt = sensor.t - t;
+%     dt = sensor.t - t;
     
-    st = alpha*dt + (1-alpha)*stm1;
+%     st = alpha*dt + (1-alpha)*stm1;
+    st = 0.0205;
 
-    K = varargin{1};
+    Kinv = varargin{1};
     pA = varargin{2}(:,:,sensor.id + 1);
     pA = reshape(permute(pA,[1,3,2]),[2,5*numel(sensor.id)]);
     
     [points,validity] = tracker(sensor.img);
     
     o1 = ones(numel(points(validity,1)),1);
-    valid_points = (K\[points(validity,:), o1]')';
-    prev_valid_points = (K\[prevPoints(validity,:), o1]')';
+    valid_points = (Kinv*[points(validity,:), o1]')';
+    prev_valid_points = (Kinv*[prevPoints(validity,:), o1]')';
     dp = (valid_points(:,1:2) - prev_valid_points(:,1:2))/st;    
     
-    p = K\[sensor.p0,sensor.p1,sensor.p2,sensor.p3,sensor.p4;ones(1,5*numel(sensor.id))];
+    p = Kinv*[sensor.p0,sensor.p1,sensor.p2,sensor.p3,sensor.p4;ones(1,5*numel(sensor.id))];
     p = p(1:2,:);
     H = estimate_homography(pA,p);
     [R,T] = estimate_transformation(H);
     [v, ~] = motionRANSAC(prev_valid_points(:,1:2),dp, H, R , T);
        
-    if sum(validity) < 18
+    if sum(validity) < 0.7*nPoints
         corners = detectFASTFeatures(sensor.img);
-        corners =  corners.selectStrongest(50);
+        corners =  corners.selectStrongest(nPoints);
         points = corners.Location;
         setPoints(tracker,points);   
     end

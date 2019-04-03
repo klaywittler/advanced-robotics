@@ -9,9 +9,9 @@ function [v, bestInliers] = motionRANSAC(p, dp, H, R, T)
 % largest consensus set
 sampleSize = 3;
 eps = 5*10^(-4);
-iter = 100;
+iter = 80;
 bestNInliers = 0;
-minNInliers = size(p,1)*0.5;
+minNInliers = size(p,1)*0.75;
 bestError = 10^(4);
 A = getA(p,H, R, T);
 
@@ -24,22 +24,24 @@ for i=1:iter
     
     v_sample = estimate_velocity(dp(sampleInd,:),Asample);
     
-    [residuals, avgError] = error(dp(testInd,:),v_sample,Atest); 
+    residuals = error(dp(testInd,:),v_sample,Atest); 
     
     curInliers = [testInd(residuals < eps), sampleInd];            % don't forget to include the sampleInd
     
     curNInliers = length(curInliers);
     
-    if curNInliers > bestNInliers || (avgError < bestError && curNInliers > minNInliers)
+    if curNInliers > bestNInliers
         bestNInliers = curNInliers;
         bestInliers = curInliers; 
-        bestError = avgError;
+        if bestNInliers == size(p,1)
+            break; 
+        end
     end
 end
 
 Abest = reshape(permute(A(bestInliers,:,:),[2,1,3]),[bestNInliers*numel(p(1,:)),6]);
 v = estimate_velocity(dp(bestInliers,:),Abest);
-% disp(['Best nu mber of inliers: ', num2str(bestNInliers), '/', num2str(size(p,1))]); 
+% disp(['Best number of inliers: ', num2str(bestNInliers), '/', num2str(size(p,1))]); 
 
 end
 
@@ -65,10 +67,9 @@ function [v] = estimate_velocity(dp,A)
     v = A\dp;
 end
 
-function [error, avg] = error(dp,v,A)
+function error = error(dp,v,A)
     dp = reshape(dp', [numel(dp),1]);
     e = (A*v - dp);
     d = reshape(e, [2,numel(dp)/2])';
     error = sum(d.^2,2);
-    avg = sum(error)/numel(error);
 end

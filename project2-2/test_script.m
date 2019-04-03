@@ -5,12 +5,14 @@ close all; clear all;
 addpath('submission')
 load('data/studentdata1.mat');
 load('aprilTagMap.mat');
+% warning('off')
 K = [311.0520, 0, 201.8724; 0, 311.3885, 113.6210; 0, 0, 1];
+Kinv = [311.0520, 0, 201.8724; 0, 311.3885, 113.6210; 0, 0, 1]\eye(3);
 T = [-0.04; 0; -0.03];
 R = eulzxy2rot([pi,0,-44.5*pi/180]);
   
 estimate_pose_handle = @(sensor) estimate_pose(sensor, K, pA, R, T);
-estimate_vel_handle = @(sensor) estimate_vel(sensor, K, pA);
+estimate_vel_handle = @(sensor) estimate_vel(sensor, Kinv, pA);
 
 pos = zeros(3,numel(data));
 q = zeros(4, numel(data));
