@@ -1,4 +1,4 @@
-function [v, bestInliers] = motionRANSAC(p, dp, H, R, T)
+function v = motionRANSAC(p, dp, H, R, T)
 % Estimate velocity given a set of 
 % pairs of matching *calibrated* points
 % X1,X2: Nx2 matrices of calibrated points
@@ -11,8 +11,6 @@ sampleSize = 3;
 eps = 5*10^(-4);
 iter = 80;
 bestNInliers = 0;
-minNInliers = size(p,1)*0.75;
-bestError = 10^(4);
 A = getA(p,H, R, T);
 
 for i=1:iter

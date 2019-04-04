@@ -5,7 +5,7 @@
 %
 % We will only call estimate_vel_handle in the test function.
 % Note that thise will only create a function handle, but not run the function
-% warning('off');
+warning('off');
 load('aprilTagMap.mat');
 Kinv = [311.0520, 0, 201.8724; 0, 311.3885, 113.6210; 0, 0, 1]\eye(3);
 T = [-0.04; 0; -0.03];

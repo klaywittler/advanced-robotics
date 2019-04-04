@@ -24,8 +24,8 @@ function [vel, omg] = estimate_vel(sensor, varargin)
 %                  @(sensor) estimate_vel(sensor, your personal input arguments);
 %   vel - 3x1 velocity of the quadrotor in world frame
 %   omg - 3x1 angular velocity of the quadrotor
-persistent tracker prevPoints t stm1 vm1 omgm1
-nPoints = 100;
+persistent tracker prevPoints vm1 omgm1
+nPoints = 120;
 
 if isempty(sensor.id) || sensor.is_ready ~= 1
     vel = zeros(3,0);
@@ -36,19 +36,14 @@ elseif isempty(tracker)
     tracker = vision.PointTracker;
     initialize(tracker,points.Location,sensor.img)
     prevPoints = points.Location;
-    t = sensor.t;
-    stm1 = 0.0205;
     vm1 = zeros(3,1);
     omgm1 = zeros(3,1);
-    vel = zeros(3,0); % make zeros(3,0); for submission 
-    omg = zeros(3,0);
+    vel = zeros(3,1); % make zeros(3,0); for submission 
+    omg = zeros(3,1);
 else
-%     alpha = 0.20;
-    beta = 0.30;
-    gamma = 0.70;  
-%     dt = sensor.t - t;
+    alpha = 0.30;
+    beta = 0.60;  
     
-%     st = alpha*dt + (1-alpha)*stm1;
     st = 0.0205;
 
     Kinv = varargin{1};
@@ -66,23 +61,21 @@ else
     p = p(1:2,:);
     H = estimate_homography(pA,p);
     [R,T] = estimate_transformation(H);
-    [v, ~] = motionRANSAC(prev_valid_points(:,1:2),dp, H, R , T);
+    v = motionRANSAC(prev_valid_points(:,1:2),dp, H, R , T);
        
-    if sum(validity) < 0.7*nPoints
+    if sum(validity) < 0.6*nPoints
         corners = detectFASTFeatures(sensor.img);
         corners =  corners.selectStrongest(nPoints);
         points = corners.Location;
         setPoints(tracker,points);   
     end
     
-    vel = beta*R'*v(1:3) + (1-beta)*vm1;
-    omg = gamma*R'*v(4:6) + (1-gamma)*omgm1;
+    vel = alpha*R'*v(1:3) + (1-alpha)*vm1;
+    omg = beta*R'*v(4:6) + (1-beta)*omgm1;
     
     vm1 = vel;
     omgm1 = omg;
     prevPoints = points;
-    t = sensor.t;
-    stm1 = st;
 end
 
 end
