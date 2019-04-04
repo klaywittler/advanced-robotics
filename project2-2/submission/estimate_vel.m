@@ -41,7 +41,7 @@ elseif isempty(tracker)
     vel = zeros(3,1); % make zeros(3,0); for submission 
     omg = zeros(3,1);
 else
-    alpha = 0.30;
+    alpha = 0.40;
     beta = 0.60;  
     
     st = 0.0205;

@@ -9,7 +9,7 @@ function v = motionRANSAC(p, dp, H, R, T)
 % largest consensus set
 sampleSize = 3;
 eps = 5*10^(-4);
-iter = 80;
+iter = 90;
 bestNInliers = 0;
 A = getA(p,H, R, T);
 
