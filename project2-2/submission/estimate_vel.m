@@ -24,7 +24,7 @@ function [vel, omg] = estimate_vel(sensor, varargin)
 %                  @(sensor) estimate_vel(sensor, your personal input arguments);
 %   vel - 3x1 velocity of the quadrotor in world frame
 %   omg - 3x1 angular velocity of the quadrotor
-persistent tracker prevPoints vm1 omgm1
+persistent tracker prevPoints vOld omgOld
 nPoints = 120;
 
 if isempty(sensor.id) || sensor.is_ready ~= 1
@@ -36,8 +36,8 @@ elseif isempty(tracker)
     tracker = vision.PointTracker;
     initialize(tracker,points.Location,sensor.img)
     prevPoints = points.Location;
-    vm1 = zeros(3,1);
-    omgm1 = zeros(3,1);
+    vOld = zeros(3,1);
+    omgOld = zeros(3,1);
     vel = zeros(3,1); % make zeros(3,0); for submission 
     omg = zeros(3,1);
 else
@@ -70,11 +70,11 @@ else
         setPoints(tracker,points);   
     end
     
-    vel = alpha*R'*v(1:3) + (1-alpha)*vm1;
-    omg = beta*R'*v(4:6) + (1-beta)*omgm1;
+    vel = alpha*R'*v(1:3) + (1-alpha)*vOld;
+    omg = beta*R'*v(4:6) + (1-beta)*omgOld;
     
-    vm1 = vel;
-    omgm1 = omg;
+    vOld = vel;
+    omgOld = omg;
     prevPoints = points;
 end
 
