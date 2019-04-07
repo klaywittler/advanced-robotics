@@ -11,18 +11,18 @@ sampleSize = 3;
 eps = 5*10^(-4);
 iter = 90;
 bestNInliers = 0;
-A = getA(p,H, R, T);
+AB = getAB(p,H, R, T);
 
 for i=1:iter
     indices = randperm(size(p,1));
     sampleInd = indices(1:sampleSize);
     testInd =  indices(sampleSize+1:length(indices));
-    Asample = reshape(permute(A(sampleInd,:,:),[2,1,3]),[sampleSize*numel(p(1,:)),6]);
-    Atest = reshape(permute(A(testInd,:,:),[2,1,3]),[(numel(p(:,1))-sampleSize)*numel(p(1,:)),6]);
+    ABsample = reshape(permute(AB(sampleInd,:,:),[2,1,3]),[sampleSize*numel(p(1,:)),6]);
+    ABtest = reshape(permute(AB(testInd,:,:),[2,1,3]),[(numel(p(:,1))-sampleSize)*numel(p(1,:)),6]);
     
-    v_sample = estimate_velocity(dp(sampleInd,:),Asample);
+    v_sample = estimate_velocity(dp(sampleInd,:),ABsample);
     
-    residuals = error(dp(testInd,:),v_sample,Atest); 
+    residuals = error(dp(testInd,:),v_sample,ABtest); 
     
     curInliers = [testInd(residuals < eps), sampleInd];            % don't forget to include the sampleInd
     
@@ -37,18 +37,18 @@ for i=1:iter
     end
 end
 
-Abest = reshape(permute(A(bestInliers,:,:),[2,1,3]),[bestNInliers*numel(p(1,:)),6]);
-v = estimate_velocity(dp(bestInliers,:),Abest);
+ABbest = reshape(permute(AB(bestInliers,:,:),[2,1,3]),[bestNInliers*numel(p(1,:)),6]);
+v = estimate_velocity(dp(bestInliers,:),ABbest);
 % disp(['Best number of inliers: ', num2str(bestNInliers), '/', num2str(size(p,1))]); 
 
 end
 
-function A = getA(p, H, R, T)
-    A = zeros(numel(p(:,1)),2,6);
+function AB = getAB(p, H, R, T)
+    AB = zeros(numel(p(:,1)),2,6);
     z = getDepth(p',H, R, T);
     zr0 = zeros(size(z));
-    A(:,1,:) = [-1./z, zr0, p(:,1)./z, p(:,1).*p(:,2), -(1 + p(:,1).^2), p(:,2)];
-    A(:,2,:) = [zr0, -1./z, p(:,2)./z, 1+p(:,2).^2, -p(:,1).*p(:,2), -p(:,1)];
+    AB(:,1,:) = [-1./z, zr0, p(:,1)./z, p(:,1).*p(:,2), -(1 + p(:,1).^2), p(:,2)];
+    AB(:,2,:) = [zr0, -1./z, p(:,2)./z, 1+p(:,2).^2, -p(:,1).*p(:,2), -p(:,1)];
 end
 
 function z = getDepth(p,H,R,T)
@@ -58,16 +58,16 @@ function z = getDepth(p,H,R,T)
     z = xc(3,:)';
 end
 
-function [v] = estimate_velocity(dp,A)
+function [v] = estimate_velocity(dp,AB)
 %ESTIMATE_VELOCITY Summary of this function goes here
 %   Detailed explanation goes here
     dp = reshape(dp', [numel(dp),1]);
-    v = A\dp;
+    v = AB\dp;
 end
 
-function error = error(dp,v,A)
+function error = error(dp,v,AB)
     dp = reshape(dp', [numel(dp),1]);
-    e = (A*v - dp);
+    e = (AB*v - dp);
     d = reshape(e, [2,numel(dp)/2])';
     error = sum(d.^2,2);
 end
