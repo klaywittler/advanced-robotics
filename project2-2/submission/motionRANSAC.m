@@ -8,7 +8,7 @@ function v = motionRANSAC(p, dp, H, R, T)
 % bestInliers: indices of the rows of X1 (and X2) that where in the
 % largest consensus set
 sampleSize = 3;
-eps = 5*10^(-4);
+eps = 5*10^(-3);
 iter = 90;
 bestNInliers = 0;
 AB = getAB(p,H, R, T);

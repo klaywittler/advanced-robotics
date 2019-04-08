@@ -42,7 +42,7 @@ elseif isempty(tracker)
     omg = zeros(3,1);
 else
     alpha = 0.40;
-    beta = 0.60;  
+    beta = 0.95;  
     
     st = 0.0205;
 
@@ -63,7 +63,7 @@ else
     [R,T] = estimate_transformation(H);
     v = motionRANSAC(prev_valid_points(:,1:2),dp, H, R , T);
        
-    if sum(validity) < 0.6*nPoints
+    if sum(validity) < 0.8*nPoints
         corners = detectFASTFeatures(sensor.img);
         corners =  corners.selectStrongest(nPoints);
         points = corners.Location;

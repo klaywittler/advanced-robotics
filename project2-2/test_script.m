@@ -110,3 +110,11 @@ subplot(4,2, 6)
 plot(t,omg(3,:),time,vicon(12,:))
 xlabel('t')
 ylabel('wz')
+
+[rms_err, rms_err_ind] = calc_err(time', vicon(7:9,:)', t', vel')
+
+function [rms_err, rms_err_ind] = calc_err(ground_time, ground_data, est_time, est_data)
+    int_ground_data = interp1(ground_time, ground_data, est_time);
+    rms_err_ind = sqrt(sum((int_ground_data-est_data).^2,1)./numel(est_time));
+    rms_err = sqrt(sum((vecnorm(int_ground_data,2,2)-vecnorm(est_data,2,2)).^2,1)./numel(est_time));
+end
