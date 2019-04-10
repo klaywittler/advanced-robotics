@@ -25,7 +25,7 @@ function [vel, omg] = estimate_vel(sensor, varargin)
 %   vel - 3x1 velocity of the quadrotor in world frame
 %   omg - 3x1 angular velocity of the quadrotor
 persistent tracker prevPoints vOld omgOld
-nPoints = 120;
+nPoints = 118;
 
 if isempty(sensor.id) || sensor.is_ready ~= 1
     vel = zeros(3,0);
