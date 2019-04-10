@@ -2,7 +2,7 @@
 
 Klayton Wittler - kwittler
 
-Collaborators: Christopher Hsu
+Collaborators: Christopher Hsu, Luca Scheuer
 
 Project 2 Phase 2
 
@@ -20,10 +20,12 @@ motionRANSAC.m : performs 80 iteration with a sample size of 3 to form a square 
 	
 	helper functions
 	
-	getA() : constructs the motion field equation for all the points in a 3D matrix - index in first dimension, (x,y) in second 		dimension, and velocity and omega in third dimension
+	getAB() : constructs the motion field equation for all the points in a 3D matrix - index in first dimension, (x,y) in second 		dimension, and velocity and omega in third dimension
 	getDepth() : finds the depth for all the points utilizing the homography, planar information, rotation and translation
 	estimate_velocity : returns the velocity for a set of points
 	error() : returns the L2 norm squared as an error metric
+
+reference: CIS 580 - Machine Perception
 
 
 
