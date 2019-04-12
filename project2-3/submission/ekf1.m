@@ -38,12 +38,29 @@ function [X, Z] = ekf1(sensor, vic, varargin)
 %     [x; y; z; qw; qx; qy; qz; other measurement you use]
 %     note that this output is optional, it's here in case you want to log your
 %     measurement
+persistent xPrev sPrev
 
-
+if isempty(sPrev)
+   sPrev = 0.1*eye(9);
+end
+if isempty(xPrev)
+    xPrev = zeros(9,1);
+end
 
 if isempty(sensor.id) || sensor.is_ready ~= 1
-    X = zeros(7,1);
-    Z = zeros(7,1);
+    if isempty(xPrev)
+        X = zeros(7,1);
+        Z = zeros(9,1);
+    else
+        dt = 0.01; 
+        [x,S] = prediction(xPrev,sPrev,vic.vel,dt);
+        xPrev = x;
+        sPrev = S;
+        
+        q = eulzxy2quat(x(4:6));
+        X = [x(1:3);q];
+        Z = x;
+    end
 else
     Kinv = varargin{1};
     pA = varargin{2}(:,:,sensor.id + 1);
@@ -56,8 +73,41 @@ else
     pC = varargin{3}*[0;0;0] + varargin{4};
     pW = R'*(pC - T);
     pos = pW(1:3);
-    q = rot2quat(R'*varargin{3});
+    q = rot2eulzxy(R'*varargin{3});
+    
+    z = [pos;q];
+    [x, S] = measurement(xPrev,sPrev,z);
+    
+    dt = 0.01; 
+    [x,S] = prediction(x,S,vic.vel,dt);
+    xPrev = x;
+    sPrev = S;
+    
+    q = eulzxy2quat(x(4:6));
+    X = [x(1:3);q];
+    Z = x;
 end
 
+end
+
+function [xtp1, Stp1] = prediction(x,S,u,dt)
+Q = 0.01*eye(9);
+n = zeros(9,1);
+[F,V,xdot] = getParameters1(x,u,n,dt);
+xtp1 = x + xdot*dt;
+
+Stp1 = F*S*F' + V*Q*V';
+
+end
+
+function [xtp1, Stp1] = measurement(x,S,z)
+R = 0.01*eye(6);
+
+C = [eye(3) zeros(3) zeros(3);
+    zeros(3) eye(3) zeros(3)];
+
+K = S*C'/(C*S*C' + R);
+xtp1 = x + K*(z-C*x);
+Stp1 = S - K*C*S;
 
 end
