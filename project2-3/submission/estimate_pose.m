@@ -1,4 +1,4 @@
-function [pos, q] = estimate_pose(sensor, varargin)
+function [pos, ang, H, R, T] = estimate_pose(sensor, varargin)
 %ESTIMATE_POSE 6DOF pose estimator based on apriltags
 %   sensor - struct stored in provided dataset, fields include:
 %          - is_ready: logical, indicates whether sensor data is valid
@@ -29,7 +29,7 @@ function [pos, q] = estimate_pose(sensor, varargin)
 
 if isempty(sensor.id) || sensor.is_ready ~= 1
     pos = zeros(3,0);
-    q = zeros(4,0);
+    ang = zeros(3,0);
 else
     Kinv = varargin{1};
     pA = varargin{2}(:,:,sensor.id + 1);
@@ -42,7 +42,45 @@ else
     pC = varargin{3}*[0;0;0] + varargin{4};
     pW = R'*(pC - T);
     pos = pW(1:3);
-    q = rot2quat(R'*varargin{3});
+    ang = rot2eulzxy(R'*varargin{3});
 end
 
+end
+
+function [ H ] = estimate_homography(video_pts, logo_pts)
+% estimate_homography estimates the homography to transform each of the
+% video_pts into the logo_pts
+% Inputs:
+%     video_pts: a 2x4 matrix of corner points in the video
+%     logo_pts: a 2x4 matrix of logo points that correspond to video_pts
+% Outputs:
+%     H: a 3x3 homography matrix such that logo_pts ~ H*video_pts
+% Written for the University of Pennsylvania's Robotics:Perception course
+
+zr0 = zeros(numel(video_pts(1,:)),1);
+o1 = ones(numel(video_pts(1,:)),1);
+A = [-video_pts(1,:)', -video_pts(2,:)', -o1, zr0, zr0, zr0, video_pts(1,:)'.*logo_pts(1,:)', video_pts(2,:)'.*logo_pts(1,:)', logo_pts(1,:)';
+    zr0 ,zr0 ,zr0 , -video_pts(1,:)', -video_pts(2,:)', -o1, video_pts(1,:)'.*logo_pts(2,:)', video_pts(2,:)'.*logo_pts(2,:)', logo_pts(2,:)'];
+
+[~, ~ , V] = svd (A) ;
+
+H = reshape(V(:,end)./V(end,end),[3,3])';
+
+end
+
+function [R,T] = estimate_transformation(r)
+%estimate_transformation utilizes planar case in z-axis and homography to
+%find rotation matrix and translation vector
+%   Input:
+%       r: 3x3 estimated homography between two images
+%   Output:
+%       R: 3x3 rotation matrix such that p2 = Rp1
+%       T: 3x1 translation vector p2 = p1 + T
+r3 = [r(2,1)*r(3,2)-r(3,1)*r(2,2); r(3,1)*r(1,2)-r(1,1)*r(3,2); r(1,1)*r(2,2)-r(2,1)*r(1,2)];
+% r3 =  cross(r(:,1),r(:,2));
+Rhat = [r(:,1) r(:,2) r3];
+[U,~,V] = svd(Rhat);
+R = U*diag([1,1,det(U*V')])*V';
+% T = r(:,3)/(0.5*norm(r(:,1)) + 0.5*norm(r(:,2)));
+T = r(:,3)/(0.5*sqrt(sum(r(:,1).^2)) + 0.5*sqrt(sum(r(:,2).^2)));
 end

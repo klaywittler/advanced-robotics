@@ -11,5 +11,5 @@ Kinv = [311.0520, 0, 201.8724; 0, 311.3885, 113.6210; 0, 0, 1]\eye(3);
 T = [-0.04; 0; -0.03];
 R = eulzxy2rot([pi,0,-44.5*pi/180]);
 
-ekf1_handle = @(sensor, vic) ekf1(sensor, vic);
-ekf2_handle = @(sensor) ekf2(sensor);
+ekf1_handle = @(sensor, vic) ekf1(sensor, vic, Kinv, pA, R, T);
+ekf2_handle = @(sensor) ekf2(sensor, Kinv, pA, R, T);

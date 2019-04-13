@@ -22,4 +22,4 @@ C = [eye(3) zeros(3) zeros(3) zeros(3);
     zeros(3) eye(3) zeros(3) zeros(3);
     zeros(3) zeros(3) eye(3) zeros(3)];
 
-matlabFunction(F,V,Xdot,'File','linearizedModel2');
+matlabFunction(F,V,Xdot,'File','getParameters2','Vars',{[x;y;z;phi;theta;psi;vx;vy;vz;bgx;bgy;bgz;bax;bay;baz],[ax;ay;az;wx;wy;wz],[nax;nay;naz;ngx;ngy;ngz;nbgx;nbgy;nbgz;nbax;nbay;nbaz],dt});

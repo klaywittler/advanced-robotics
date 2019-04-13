@@ -17,6 +17,6 @@ V = simplify(jacobian(Xdot,N));
 C = [eye(3) zeros(3) zeros(3);
     zeros(3) eye(3) zeros(3)];
 
-matlabFunction(F,V,Xdot,'File','linearizedModel1');
+matlabFunction(F,V,Xdot,'File','getParameters1','Vars',{[x;y;z;phi;theta;psi;bgx;bgy;bgz],[vx;vy;vz;wx;wy;wz],[nvx;nvy;nvz;ngx;ngy;ngz;nbgx;nbgy;nbgz],dt});
 % matlabFunction(Xdot,'File','motionModel1');
 % U = matlabFunction(V);

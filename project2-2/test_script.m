@@ -31,66 +31,22 @@ profile off
 
 disp(['Average run time (ms): ',  num2str(1000*mean(elapsedTime))]);
 t = [data.t];
-% qVicon = zeros(4,numel(time));
-% for i=1:numel(time)
-%     qVicon(:,i) = eulzxy2quat([vicon(4,i),vicon(5,i),vicon(6,i)]);
-% end
-
-% figure()
-% %%% position plots
-% subplot(4,2, 1)
-% plot(t,pos(1,:),time,vicon(1,:))
-% xlabel('t')
-% ylabel('x [m]')
-% title('position')
-% subplot(4,2,3)
-% plot(t,pos(2,:),time,vicon(2,:))
-% xlabel('t')
-% ylabel('y [m]')
-% subplot(4,2,5)
-% plot(t,pos(3,:),time,vicon(3,:))
-% xlabel('t')
-% ylabel('z [m]')
-% %%% legend
-% hSub = subplot(4,2,7); plot(1,1,1,1);
-% hLegend = legend('estimated','vicon');
-% set(hLegend, 'position', get(hSub, 'position')); % Adjusting legend's position     
-% axis(hSub,'off');           % Turning its axis off
-% %%% orientation plots
-% subplot(4,2, 2)
-% plot(t,q(1,:),time,qVicon(1,:))
-% xlabel('t')
-% ylabel('qw')
-% title('orientation')
-% subplot(4,2,4)
-% plot(t,q(2,:),time,qVicon(2,:))
-% xlabel('t')
-% ylabel('qx')
-% subplot(4,2, 6)
-% plot(t,q(3,:),time,qVicon(3,:))
-% xlabel('t')
-% ylabel('qy')
-% subplot(4,2,8)
-% plot(t,q(4,:),time,qVicon(4,:))
-% xlabel('t')
-% ylabel('qz')
-
 
 figure()
 %%% velocity plots
 subplot(4,2, 1)
 plot(t,vel(1,:),time,vicon(7,:))
 xlabel('t')
-ylabel('x [m]')
-title('position')
+ylabel('vx [m/s]')
+title('linear velocity')
 subplot(4,2,3)
 plot(t,vel(2,:),time,vicon(8,:))
 xlabel('t')
-ylabel('y [m]')
+ylabel('vy [m/s]')
 subplot(4,2,5)
 plot(t,vel(3,:),time,vicon(9,:))
 xlabel('t')
-ylabel('z [m]')
+ylabel('vz [m/s]')
 %%% legend
 hSub = subplot(4,2,7.5); plot(1,1,1,1);
 hLegend = legend('estimated','vicon');
@@ -100,21 +56,38 @@ axis(hSub,'off');           % Turning its axis off
 subplot(4,2, 2)
 plot(t,omg(1,:),time,vicon(10,:))
 xlabel('t')
-ylabel('wx')
-title('orientation')
+ylabel('wx [rad/s]')
+title('angular velcity')
 subplot(4,2,4)
 plot(t,omg(2,:),time,vicon(11,:))
 xlabel('t')
-ylabel('wy')
+ylabel('wy [rad/s]')
 subplot(4,2, 6)
 plot(t,omg(3,:),time,vicon(12,:))
 xlabel('t')
-ylabel('wz')
+ylabel('wz [rad/s]')
 
-[rms_err, rms_err_ind] = calc_err(time', vicon(7:9,:)', t', vel')
+[rms_err, ~] = calc_err(time', vicon(7:9,:)', t', vel')
 
 function [rms_err, rms_err_ind] = calc_err(ground_time, ground_data, est_time, est_data)
     int_ground_data = interp1(ground_time, ground_data, est_time);
     rms_err_ind = sqrt(sum((int_ground_data-est_data).^2,1)./numel(est_time));
     rms_err = sqrt(sum((vecnorm(int_ground_data,2,2)-vecnorm(est_data,2,2)).^2,1)./numel(est_time));
 end
+% function [rms_err, rms_err_ind] = calc_err(ground_time, ground_data, est_time, est_data)
+% %     int_ground_data = interp1(ground_time, ground_data, est_time);
+% %     rms_err_ind = sqrt(sum((int_ground_data-est_data).^2,1)./numel(est_time));
+% %     rms_err = sqrt(sum((vecnorm(int_ground_data,2,2)-vecnorm(est_data,2,2)).^2,1)./numel(est_time));
+%     j = 1;
+%     rms_err_ind = 0;
+%     err = zeros(numel(est_time),1);
+%      for i=1:numel(ground_data(1,:))
+%         if ground_time(i) == est_time(j)
+%             err(j) = norm(ground_data(i)-est_data(j));
+%             if j < numel(est_data)
+%                 j = j+1;
+%             end
+%         end
+%      end   
+%     rms_err = sqrt(sum(err.^2))/numel(est_time);
+% end

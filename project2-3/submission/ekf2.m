@@ -38,7 +38,7 @@ function [X, Z] = ekf2(sensor, varargin)
 persistent xPrev sPrev
 
 if isempty(sPrev)
-   sPrev = 0.1*eye(15);
+   sPrev = 100*eye(15);
 end
 if isempty(xPrev)
     xPrev = zeros(15,1);
@@ -48,21 +48,9 @@ if isempty(sensor.id) || sensor.is_ready ~= 1
     X = zeros(10,1);
     Z = zeros(15,1);
 else
-    Kinv = varargin{1};
-    pA = varargin{2}(:,:,sensor.id + 1);
-    pA = reshape(permute(pA,[1,3,2]),[2,5*numel(sensor.id)]);
-    p = Kinv*[sensor.p0,sensor.p1,sensor.p2,sensor.p3,sensor.p4;ones(1,5*numel(sensor.id))];
-    p = p(1:2,:);
-    H = estimate_homography(pA,p);
-    [R,T] = estimate_transformation(H);
+    [pos, ang, vel, ~] = estimate_state(sensor, varargin{:});
     
-    pC = varargin{3}*[0;0;0] + varargin{4};
-    pW = R'*(pC - T);
-    pos = pW(1:3);
-    q = rot2eulzxy(R'*varargin{3});
-    
-    
-    z = [pos;q];
+    z = [pos;ang;vel];
     [x, S] = measurement(xPrev,sPrev,z);
     
     dt = 0.0205; 
@@ -72,32 +60,30 @@ else
     sPrev = S;
     
     q = eulzxy2quat(x(4:6));
-    X = [x(1:3);x(7:12);q];
+    X = [x(1:3);x(7:9);q];
     Z = x;
 end
 
 end
 
-function [xtp1, Stp1] = prediction(x,S,u,dt)
-Q = 0.01*eye(15);
-n = zeros(15,1);
-[F,V,xdot] = getParameters2(x,u,n,dt);
-xtp1 = x + xdot*dt;
+function [xNext, SNext] = prediction(x,S,u,dt)
+    Q = 0.01*eye(12);
+    n = zeros(12,1);
+    [F,V,xdot] = getParameters2(x,u,n,dt);
+    xNext = x + xdot*dt;
 
-Stp1 = F*S*F' + V*Q*V';
-
+    SNext = F*S*F' + V*Q*V';
 end
 
-function [xtp1, Stp1] = measurement(x,S,z)
-R = 0.01*eye(12);
+function [xNext, SNext] = measurement(x,S,z)
+    R = 0.01*eye(9);
 
-C = [eye(3) zeros(3) zeros(3) zeros(3);
-    zeros(3) eye(3) zeros(3) zeros(3);
-    zeros(3) zeros(3) eye(3) zeros(3)];
+    C = [eye(3) zeros(3) zeros(3) zeros(3) zeros(3);
+        zeros(3) eye(3) zeros(3) zeros(3) zeros(3);
+        zeros(3) zeros(3) eye(3) zeros(3) zeros(3)];
 
-K = S*C'/(C*S*C' + R);
-xtp1 = x + K*(z-C*x);
-Stp1 = S - K*C*S;
-
+    K = S*C'/(C*S*C' + R);
+    xNext = x + K*(z-C*x);
+    SNext = S - K*C*S;
 end
 
