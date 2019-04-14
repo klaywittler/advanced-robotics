@@ -1,4 +1,4 @@
-function [pos,ang,vel, omg] = estimate_state(sensor, varargin)
+function [pos,ang,vel,omg] = estimate_state(sensor, varargin)
 %ESTIMATE_VEL 6DOF velocity estimator
 %   sensor - struct stored in provided dataset, fields include:
 %          - is_ready: logical, indicates whether sensor data is valid; if the
@@ -25,7 +25,7 @@ function [pos,ang,vel, omg] = estimate_state(sensor, varargin)
 %   vel - 3x1 velocity of the quadrotor in world frame
 %   omg - 3x1 angular velocity of the quadrotor
 persistent tracker prevPoints vOld omgOld
-nPoints = 100;
+nPoints = 120;
 
 if isempty(sensor.id) || sensor.is_ready ~= 1
     pos = zeros(3,0);
@@ -35,7 +35,7 @@ if isempty(sensor.id) || sensor.is_ready ~= 1
 elseif isempty(tracker)    
     points = detectFASTFeatures(sensor.img);
     points = points.selectStrongest(nPoints);
-    tracker = vision.PointTracker;
+    tracker = vision.PointTracker('MaxBidirectionalError',2);
     initialize(tracker,points.Location,sensor.img)
     prevPoints = points.Location;
     vOld = zeros(3,1);
@@ -46,10 +46,10 @@ elseif isempty(tracker)
     [pos, ang, ~, ~, ~] = estimate_pose(sensor, varargin{:});
     
 else
-%     alpha = 0.40;
-%     beta = 0.95;  
-    alpha = 1;
-    beta = 1; 
+    alpha = 0.40;
+    beta = 0.95;  
+%     alpha = 1;
+%     beta = 1;
     
     st = 0.0205;
     Kinv = varargin{1};
@@ -71,7 +71,7 @@ else
         points = corners.Location;
         setPoints(tracker,points);   
     end
-    vel = R'*(v(1:3)+cross(v(4:6),varargin{4}));
+    vel = R'*v(1:3);
     omg = R'*v(4:6);
     
     vel = alpha*vel  + (1-alpha)*vOld;

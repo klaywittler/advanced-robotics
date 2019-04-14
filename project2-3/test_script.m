@@ -8,7 +8,7 @@
 % Note that this will only create a function handle, but not run the function
 close all; clear all;
 addpath('submission')
-load('data/studentdata1.mat');
+load('data/studentdata4.mat');
 load('aprilTagMap.mat');
 
 Kinv = [311.0520, 0, 201.8724; 0, 311.3885, 113.6210; 0, 0, 1]\eye(3);
@@ -20,7 +20,7 @@ R = eulzxy2rot([pi,0,-44.5*pi/180]);
 ekf1_handle = @(sensor, vic) ekf1(sensor, vic, Kinv, pA, R, T);
 ekf2_handle = @(sensor) ekf2(sensor, Kinv, pA, R, T);
 
-ekf = 1;
+ekf = 2;
 
 qVicon = zeros(4,numel(time));
 for i=1:numel(time)
@@ -41,6 +41,7 @@ if ekf == 1
             end
         else
             d.id = [];
+            d.is_ready = 0;
         end
         v.vel = vicon(7:12,i);
         v.t = time(i);
@@ -69,7 +70,7 @@ elseif ekf == 2
         tic
         [X2(:,i), Z2(:,i)] = ekf2_handle(data(i));
         elapsedTime(i) = toc;
-    end 
+    end  
     profile report
     profile off
 
@@ -81,8 +82,8 @@ elseif ekf == 2
     plotting(t,X2,time,ground_data)  
 end
 
-% [rms_err, ~] = calc_err(ground_time', ground_data', est_time', est_data');
-% disp(['rms error: ',  num2str(rms_err)]); 
+[rms_err, ~] = calc_err(ground_time', ground_data', est_time', est_data');
+disp(['rms error: ',  num2str(rms_err)]); 
 
 disp(['Average run time (ms): ',  num2str(1000*mean(elapsedTime))]); 
 

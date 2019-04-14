@@ -24,7 +24,7 @@ for i=1:iter
     
     residuals = error(dp(testInd,:),v_sample,ABtest); 
     
-    curInliers = [testInd(residuals < eps), sampleInd];            % don't forget to include the sampleInd
+    curInliers = [testInd(residuals < eps), sampleInd];
     
     curNInliers = length(curInliers);
     
@@ -59,8 +59,6 @@ function z = getDepth(p,H,R,T)
 end
 
 function [v] = estimate_velocity(dp,AB)
-%ESTIMATE_VELOCITY Summary of this function goes here
-%   Detailed explanation goes here
     dp = reshape(dp', [numel(dp),1]);
     v = AB\dp;
 end

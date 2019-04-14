@@ -47,34 +47,21 @@ if isempty(xPrev)
     xPrev = zeros(9,1);
 end
 
-if isempty(sensor.id) || sensor.is_ready ~= 1
-    if isempty(xPrev)
-        X = zeros(7,1);
-        Z = zeros(9,1);
-    else
-        dt = 0.01; 
-        [x,S] = prediction(xPrev,sPrev,vic.vel,dt);
-        xPrev = x;
-        sPrev = S;
-        
-        q = eulzxy2quat(x(4:6));
-        X = [x(1:3);q];
-        Z = x;
-    end
-else  
+dt = 0.01; 
+[x,S] = prediction(xPrev,sPrev,vic.vel,dt);
+
+if ~isempty(sensor.id) && sensor.is_ready == 1
     [pos, ang, ~, ~, ~] = estimate_pose(sensor, varargin{:});
     z = [pos;ang];
-    [x, S] = measurement(xPrev,sPrev,z);
-    
-    dt = 0.01; 
-    [x,S] = prediction(x,S,vic.vel,dt);
-    xPrev = x;
-    sPrev = S;
-    
-    q = eulzxy2quat(x(4:6));
-    X = [x(1:3);q];
-    Z = x;
+    [x, S] = measurement(x,S,z); 
 end
+      
+xPrev = x;
+sPrev = S;
+    
+q = eulzxy2quat(x(4:6));
+X = [x(1:3);q];
+Z = x;
 
 end
 

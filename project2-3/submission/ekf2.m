@@ -44,30 +44,31 @@ if isempty(xPrev)
     xPrev = zeros(15,1);
 end
 
-if isempty(sensor.id) || sensor.is_ready ~= 1
-    X = zeros(10,1);
-    Z = zeros(15,1);
+if sensor.is_ready ~= 1
+    x = xPrev;
 else
-    [pos, ang, vel, ~] = estimate_state(sensor, varargin{:});
-    
-    z = [pos;ang;vel];
-    [x, S] = measurement(xPrev,sPrev,z);
-    
     dt = 0.0205; 
     u = [sensor.acc; sensor.omg];
-    [x,S] = prediction(x,S,u,dt);
+    [x,S] = prediction(xPrev,sPrev,u,dt);
+
+    if ~isempty(sensor.id)
+        [pos, ang, vel, ~] = estimate_state(sensor, varargin{:});
+        z = [pos;ang;vel];
+        [x, S] = measurement(x,S,z);
+    end
+    
     xPrev = x;
     sPrev = S;
     
-    q = eulzxy2quat(x(4:6));
-    X = [x(1:3);x(7:9);q];
-    Z = x;
 end
+q = eulzxy2quat(x(4:6));
+X = [x(1:3);x(7:9);q];
+Z = x;
 
 end
 
 function [xNext, SNext] = prediction(x,S,u,dt)
-    Q = 0.01*eye(12);
+    Q = 10*eye(12);
     n = zeros(12,1);
     [F,V,xdot] = getParameters2(x,u,n,dt);
     xNext = x + xdot*dt;
@@ -76,7 +77,7 @@ function [xNext, SNext] = prediction(x,S,u,dt)
 end
 
 function [xNext, SNext] = measurement(x,S,z)
-    R = 0.01*eye(9);
+    R = 0.1*eye(9);
 
     C = [eye(3) zeros(3) zeros(3) zeros(3) zeros(3);
         zeros(3) eye(3) zeros(3) zeros(3) zeros(3);
