@@ -8,7 +8,7 @@
 % Note that this will only create a function handle, but not run the function
 close all; clear all;
 addpath('submission')
-load('data/studentdata4.mat');
+load('data/studentdata1.mat');
 load('aprilTagMap.mat');
 
 Kinv = [311.0520, 0, 201.8724; 0, 311.3885, 113.6210; 0, 0, 1]\eye(3);
@@ -20,7 +20,7 @@ R = eulzxy2rot([pi,0,-44.5*pi/180]);
 ekf1_handle = @(sensor, vic) ekf1(sensor, vic, Kinv, pA, R, T);
 ekf2_handle = @(sensor) ekf2(sensor, Kinv, pA, R, T);
 
-ekf = 2;
+ekf = 1;
 
 qVicon = zeros(4,numel(time));
 for i=1:numel(time)
@@ -46,8 +46,12 @@ if ekf == 1
         v.vel = vicon(7:12,i);
         v.t = time(i);
         tic
-        [X1(:,i), Z1(:,i)] = ekf1_handle(d, v);
+        [x, Z1(:,i)] = ekf1_handle(d, v);
+        
         elapsedTime(i) = toc;
+        if ~isempty(x)
+          X1(:,i)  = x;
+        end
     end 
     profile report
     profile off
@@ -68,8 +72,11 @@ elseif ekf == 2
     profile on
     for i=1:numel(data)
         tic
-        [X2(:,i), Z2(:,i)] = ekf2_handle(data(i));
+        [x, Z2(:,i)] = ekf2_handle(data(i));
         elapsedTime(i) = toc;
+        if ~isempty(x)
+          X2(:,i)  = x;
+        end 
     end  
     profile report
     profile off
