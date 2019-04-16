@@ -28,8 +28,8 @@ for i=1:numel(time)
 end
 
 if ekf == 1
-    X1 = zeros(7,numel(vicon(1,:)));
-    Z1 = zeros(9,numel(vicon(1,:)));
+    X1 = nan(7,numel(vicon(1,:)));
+    Z1 = nan(6,numel(vicon(1,:)));
     j = 1;
     elapsedTime = zeros(1, numel(vicon(1,:)));
     profile on
@@ -64,8 +64,8 @@ if ekf == 1
     plotting(time,X1,time,ground_data)
 elseif ekf == 2
     warning('off')
-    X2 = zeros(10,numel(data));
-    Z2 = zeros(15,numel(data));
+    X2 = nan(10,numel(data));
+    Z2 = nan(15,numel(data));
     t = [data.t];
     elapsedTime = zeros(1, numel(data));
     profile on
@@ -88,8 +88,8 @@ elseif ekf == 2
     plotting(t,X2,time,ground_data)  
 end
 
-[rms_err, ~] = calc_err(ground_time', ground_data', est_time', est_data');
-disp(['rms error: ',  num2str(rms_err)]); 
+% [rms_err, ~] = calc_err(ground_time', ground_data', est_time', est_data');
+% disp(['rms error: ',  num2str(rms_err)]); 
 
 disp(['Average run time (ms): ',  num2str(1000*mean(elapsedTime))]); 
 

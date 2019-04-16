@@ -35,18 +35,21 @@ function [X, Z] = ekf2(sensor, varargin)
 %     note that this output is optional, it's here in case you want to log your
 %     measurement
 
-persistent first x S
+persistent first x S t
 
 if isempty(first)
    first = false;
    S = 100*eye(15);
    x = zeros(15,1);
+   t = 0;
 end
 
 if sensor.is_ready == 1
-    dt = 0.020; 
-    u = [sensor.acc; sensor.omg];
-    [x,S] = prediction(x,S,u,dt);
+    if first
+        dt = sensor.t - t; 
+        u = [sensor.acc; sensor.omg];
+        [x,S] = prediction(x,S,u,dt); 
+    end
 
     if ~isempty(sensor.id)
         [pos, ang, vel, ~] = estimate_state(sensor, varargin{:});
@@ -67,9 +70,11 @@ if first
     q = eulzxy2quat(x(4:6));
     X = [x(1:3);x(7:9);q];
     Z = x;
+    t = sensor.t;
 else
     X = zeros(10,0);
     Z = x;
+    t = sensor.t;
 end
 
 end
