@@ -84,8 +84,8 @@ end
 end
 
 function [xNext, SNext] = prediction(x,S,u,dt)
-    Q = 100*eye(12);
-%     Q = diag([10,10,10,100,100,100,10,10,10,10,10,10]);
+%     Q = 100*eye(12);
+    Q = diag([10,10,10,100,100,100,10,10,10,10,10,10]);
     n = zeros(12,1);
     [F,V,xdot] = getParameters2(x,u,n,dt);
     xNext = x + xdot*dt;
