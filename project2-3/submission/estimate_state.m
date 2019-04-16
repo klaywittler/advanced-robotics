@@ -25,7 +25,7 @@ function [pos,ang,vel,omg] = estimate_state(sensor, varargin)
 %   vel - 3x1 velocity of the quadrotor in world frame
 %   omg - 3x1 angular velocity of the quadrotor
 persistent tracker prevPoints vOld omgOld
-nPoints = 120;
+nPoints = 118;
 
 if isempty(sensor.id) || sensor.is_ready ~= 1
     pos = zeros(3,0);
@@ -34,7 +34,8 @@ if isempty(sensor.id) || sensor.is_ready ~= 1
     omg = zeros(3,0);
 elseif isempty(tracker)    
     points = detectFASTFeatures(sensor.img);
-    points = points.selectStrongest(nPoints);
+    points = points.selectStrongest(2*nPoints);
+    points = selectUniform(points,nPoints,size(sensor.img));
     tracker = vision.PointTracker('MaxBidirectionalError',2);
     initialize(tracker,points.Location,sensor.img)
     prevPoints = points.Location;

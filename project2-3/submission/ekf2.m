@@ -35,20 +35,24 @@ function [X, Z] = ekf2(sensor, varargin)
 %     note that this output is optional, it's here in case you want to log your
 %     measurement
 
-persistent first x S t
+persistent first x S t stPrev
 
 if isempty(first)
    first = false;
    S = 100*eye(15);
    x = zeros(15,1);
    t = 0;
+   stPrev = 0.01;
 end
 
 if sensor.is_ready == 1
     if first
-        dt = sensor.t - t; 
+        alpha = 0.5;
+        dt = sensor.t - t;
+        st = alpha*dt + (1-alpha)*stPrev;
+        stPrev = st;
         u = [sensor.acc; sensor.omg];
-        [x,S] = prediction(x,S,u,dt); 
+        [x,S] = prediction(x,S,u,st); 
     end
 
     if ~isempty(sensor.id)
@@ -80,7 +84,8 @@ end
 end
 
 function [xNext, SNext] = prediction(x,S,u,dt)
-    Q = 10*eye(12);
+    Q = 100*eye(12);
+%     Q = diag([10,10,10,100,100,100,10,10,10,10,10,10]);
     n = zeros(12,1);
     [F,V,xdot] = getParameters2(x,u,n,dt);
     xNext = x + xdot*dt;
@@ -89,7 +94,7 @@ function [xNext, SNext] = prediction(x,S,u,dt)
 end
 
 function [xNext, SNext] = measurement(x,S,z)
-    R = 0.1*eye(9);
+    R = 0.01*eye(9);
 
     C = [eye(3) zeros(3) zeros(3) zeros(3) zeros(3);
         zeros(3) eye(3) zeros(3) zeros(3) zeros(3);
