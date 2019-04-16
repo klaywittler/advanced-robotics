@@ -20,7 +20,7 @@ R = eulzxy2rot([pi,0,-44.5*pi/180]);
 ekf1_handle = @(sensor, vic) ekf1(sensor, vic, Kinv, pA, R, T);
 ekf2_handle = @(sensor) ekf2(sensor, Kinv, pA, R, T);
 
-ekf = 1;
+ekf = 2;
 
 qVicon = zeros(4,numel(time));
 for i=1:numel(time)
@@ -62,7 +62,6 @@ if ekf == 1
     ground_data = [vicon(1:3,:);  qVicon];
     
     plotting(time,X1,time,ground_data)
-
 elseif ekf == 2
     warning('off')
     X2 = zeros(10,numel(data));

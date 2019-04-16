@@ -44,7 +44,7 @@ if isempty(first)
 end
 
 if sensor.is_ready == 1
-    dt = 0.0205; 
+    dt = 0.020; 
     u = [sensor.acc; sensor.omg];
     [x,S] = prediction(x,S,u,dt);
 
@@ -61,7 +61,6 @@ if sensor.is_ready == 1
             [x, S] = measurement(x,S,z);
         end
     end
-    
 end
 
 if first
