@@ -7,7 +7,7 @@ X = [x;y;z;phi;theta;psi;vx;vy;vz;bgx;bgy;bgz;bax;bay;baz];
 U = [ax;ay;az;wx;wy;wz];
 N = [nax;nay;naz;ngx;ngy;ngz;nbgx;nbgy;nbgz;nbax;nbay;nbaz];
 g = [0;0;1];
-
+% g = [0;0;-9.81];
 G = [cos(X(5)) 0 -cos(X(4))*sin(X(5));
         0 1 sin(X(4));
         sin(X(5)) 0 cos(X(4))*cos(X(5))];

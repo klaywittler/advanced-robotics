@@ -52,6 +52,9 @@ if ekf == 1
         if ~isempty(x)
           X1(:,i)  = x;
         end
+        if ~isempty(z)
+          Z1(:,i)  = z;
+        end
     end 
     profile report
     profile off
@@ -71,10 +74,13 @@ elseif ekf == 2
     profile on
     for i=1:numel(data)
         tic
-        [x, Z2(:,i)] = ekf2_handle(data(i));
+        [x, z] = ekf2_handle(data(i));
         elapsedTime(i) = toc;
         if ~isempty(x)
           X2(:,i)  = x;
+        end 
+        if ~isempty(z)
+          Z2(:,i)  = z;
         end 
     end  
     profile report
