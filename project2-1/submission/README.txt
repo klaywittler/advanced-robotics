@@ -6,7 +6,7 @@ Collaborators: Christopher Hsu
 
 Project 2 Phase 1
 
-init_script.m : loads the April Tag map, camera instrinsic, and transformation from imu to camera to send to estimate_pose.m
+init_script.m : loads the April Tag map, camera intrinsics, and transformation from imu to camera to send to estimate_pose.m
 estimate_pose.m : estimates the pose of the robot utilizing known April Tag map and coordinates from an image by getting the homography between the 2 images and then estimates the rotation and translation from the homography using the fact that the April Tag map is planar. Converts origin of robot frame to camera using rotation and translation from parameters.txt then using estimated rotation and translation to convert to world frame. 
 
 helper funcntions

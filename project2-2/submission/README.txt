@@ -6,8 +6,8 @@ Collaborators: Christopher Hsu, Luca Scheuer
 
 Project 2 Phase 2
 
-init_script.m : loads the April Tag map, camera instrinsic, and transformation from imu to camera to send to estimate_pose.m
-estimate_vel.m : estimates the velocity and angular velocity of the robot utilizing optical flow and RANSAC. Features in the image are 	found with detectFASTFeatures(I) and tracked. The previous image is stored to find the pixel velocities (optical flow) then 	RANSAC is used to find the best estimate of velocity that explains the optical flow.
+init_script.m : loads the April Tag map, camera intrinsics, and transformation from imu to camera to send to estimate_pose.m
+estimate_vel.m : estimates the velocity and angular velocity of the robot utilizing optical flow and RANSAC. Features in the image are found with detectFASTFeatures(I) and tracked. The previous image is stored to find the pixel velocities (optical flow) then 	RANSAC is used to find the best estimate of velocity that explains the optical flow.
 
 helper funcntions
 

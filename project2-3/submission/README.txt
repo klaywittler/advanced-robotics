@@ -6,7 +6,7 @@ Collaborators: Christopher Hsu, Luca Scheuer
 
 Project 2 Phase 3
 
-init_script.m : loads the April Tag map, camera instrinsic, and transformation from imu to camera to send to estimate_pose.m
+init_script.m : loads the April Tag map, camera intrinsics, and transformation from imu to camera to send to estimate_pose.m
 ekf1.m : 
 ekf2.m : 
 
