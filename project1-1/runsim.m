@@ -9,7 +9,7 @@ close all
 clear all
 addpath('utils')
 addpath('trajectories')
-% addpath('submission')
+addpath('submission')
 
 % You need to implement trajhandle and controlhandle
 
